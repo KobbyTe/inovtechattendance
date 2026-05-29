@@ -40,7 +40,7 @@ export function TodayAttendance() {
     <section>
       <div className="glass rounded-xl px-4 py-2.5 mb-3">
         <h2 className="text-xs font-semibold text-white uppercase tracking-wider">
-          Today's Attendance · {records.length}
+          Today's Attendance
         </h2>
       </div>
 
