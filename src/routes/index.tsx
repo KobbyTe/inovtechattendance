@@ -1,10 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { AppHeader } from "@/components/AppHeader";
 import { ClockInForm } from "@/components/ClockInForm";
 import { TodayAttendance } from "@/components/TodayAttendance";
-import { formatDateLong, getDayName, isMeetingDay } from "@/lib/attendance";
-import { format } from "date-fns";
+import { GraduationCap } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -26,45 +23,62 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const meetingDay = isMeetingDay(now);
-  const day = getDayName(now);
-
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <AppHeader />
-      <main className="flex-1 mx-auto w-full max-w-xl px-4 py-5 space-y-5">
-        <section className="rounded-xl bg-card border border-border p-5 text-center">
-          <p className="text-sm text-muted-foreground">{formatDateLong(now)}</p>
-          <p className="text-4xl sm:text-5xl font-bold tabular-nums tracking-tight text-foreground mt-1">
-            {format(now, "h:mm:ss a")}
-          </p>
-          <div className="mt-3 inline-flex items-center gap-2">
-            {meetingDay ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-success/15 text-success px-3 py-1 text-xs font-semibold">
-                <span className="h-2 w-2 rounded-full bg-success" />
-                Meeting day · {day}
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-warning/20 text-warning-foreground px-3 py-1 text-xs font-semibold">
-                No session today — attendance only on Wed, Thu, Fri
-              </span>
-            )}
-          </div>
-        </section>
+    <div className="relative min-h-screen flex flex-col bg-bootcamp-gradient overflow-hidden">
+      {/* Animated background blobs */}
+      <div
+        className="blob"
+        style={{ width: 400, height: 400, top: -100, left: -120, background: "#60A5FA" }}
+      />
+      <div
+        className="blob"
+        style={{
+          width: 500,
+          height: 500,
+          bottom: -150,
+          right: -150,
+          background: "#818CF8",
+          animationDelay: "6s",
+        }}
+      />
+      <div
+        className="blob"
+        style={{
+          width: 320,
+          height: 320,
+          top: "40%",
+          left: "55%",
+          background: "#A78BFA",
+          animationDelay: "12s",
+        }}
+      />
 
-        <section className="rounded-xl bg-card border border-border p-4">
+      {/* Header */}
+      <header className="relative z-10 px-4 pt-6 pb-2">
+        <div className="mx-auto max-w-xl flex items-center gap-3">
+          <div className="h-11 w-11 rounded-xl glass flex items-center justify-center shrink-0">
+            <GraduationCap className="h-6 w-6 text-white" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-2xl font-bold text-white tracking-tight leading-tight">
+              Inovtech Future Skills Bootcamp
+            </h1>
+            <p className="text-xs sm:text-sm text-blue-200 leading-tight">
+              Attendance System
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <main className="relative z-10 flex-1 mx-auto w-full max-w-xl px-4 py-5 space-y-5">
+        <section className="glass-strong rounded-2xl p-6 sm:p-7">
           <ClockInForm />
         </section>
 
         <TodayAttendance />
       </main>
-      <footer className="py-6 text-center text-xs text-muted-foreground">
+
+      <footer className="relative z-10 py-6 text-center text-xs text-blue-200/70">
         © 2025 Inovtech Future Skills Bootcamp
       </footer>
     </div>

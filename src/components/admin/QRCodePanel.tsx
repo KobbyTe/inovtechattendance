@@ -28,8 +28,8 @@ export function QRCodePanel() {
 
   return (
     <div className="space-y-4 max-w-md mx-auto">
-      <div className="rounded-xl bg-card border border-border p-6 flex flex-col items-center">
-        <div ref={ref}>
+      <div className="rounded-2xl glass-strong p-6 flex flex-col items-center animate-float">
+        <div ref={ref} className="bg-white p-3 rounded-xl shadow-xl">
           {url && (
             <QRCodeCanvas
               value={url}
