@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ClockInForm } from "@/components/ClockInForm";
-import { TodayAttendance } from "@/components/TodayAttendance";
 import logoInovtech from "@/assets/logo-inovtech.png";
 
 export const Route = createFileRoute("/")({
@@ -70,12 +69,10 @@ function Index() {
         </div>
       </header>
 
-      <main className="relative z-10 flex-1 mx-auto w-full max-w-xl px-4 py-5 space-y-5">
+      <main className="relative z-10 flex-1 mx-auto w-full max-w-xl px-4 py-5">
         <section className="glass-strong rounded-2xl p-6 sm:p-7">
           <ClockInForm />
         </section>
-
-        <TodayAttendance />
       </main>
 
       <footer className="relative z-10 py-6 text-center text-xs text-blue-200/70">
