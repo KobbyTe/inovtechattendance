@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ClockInForm } from "@/components/ClockInForm";
 import { TodayAttendance } from "@/components/TodayAttendance";
-import { GraduationCap } from "lucide-react";
+import logoInovtech from "@/assets/logo-inovtech.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -56,8 +56,8 @@ function Index() {
       {/* Header */}
       <header className="relative z-10 px-4 pt-6 pb-2">
         <div className="mx-auto max-w-xl flex items-center gap-3">
-          <div className="h-11 w-11 rounded-xl glass flex items-center justify-center shrink-0">
-            <GraduationCap className="h-6 w-6 text-white" />
+          <div className="h-12 w-12 rounded-xl bg-white flex items-center justify-center shrink-0 overflow-hidden p-1">
+            <img src={logoInovtech} alt="Inovtech logo" className="h-full w-full object-contain" />
           </div>
           <div className="min-w-0">
             <h1 className="text-lg sm:text-2xl font-bold text-white tracking-tight leading-tight">
