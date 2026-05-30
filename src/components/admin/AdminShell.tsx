@@ -3,6 +3,7 @@ import {
   BarChart2,
   Calendar,
   GraduationCap,
+  Layers,
   LogOut,
   QrCode,
   Settings,
@@ -12,11 +13,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
-export type AdminTab = "dashboard" | "roster" | "records" | "qr" | "settings";
+export type AdminTab = "dashboard" | "roster" | "cohorts" | "records" | "qr" | "settings";
 
 const TABS: { id: AdminTab; label: string; icon: typeof BarChart2 }[] = [
   { id: "dashboard", label: "Dashboard", icon: BarChart2 },
   { id: "roster", label: "Roster", icon: Users },
+  { id: "cohorts", label: "Cohorts", icon: Layers },
   { id: "records", label: "Records", icon: Calendar },
   { id: "qr", label: "QR Code", icon: QrCode },
   { id: "settings", label: "Settings", icon: Settings },
@@ -99,7 +101,7 @@ export function AdminShell({
         </main>
 
         {/* Mobile bottom tab bar */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border grid grid-cols-5 z-50">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border grid grid-cols-6 z-50">
           {TABS.map((t) => (
             <button
               key={t.id}
