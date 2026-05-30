@@ -55,29 +55,85 @@ export type Database = {
           },
         ]
       }
+      cohorts: {
+        Row: {
+          code: string
+          color: string
+          created_at: string
+          duration_weeks: number | null
+          end_date: string | null
+          id: string
+          is_ongoing: boolean
+          name: string
+          start_date: string | null
+        }
+        Insert: {
+          code: string
+          color?: string
+          created_at?: string
+          duration_weeks?: number | null
+          end_date?: string | null
+          id?: string
+          is_ongoing?: boolean
+          name: string
+          start_date?: string | null
+        }
+        Update: {
+          code?: string
+          color?: string
+          created_at?: string
+          duration_weeks?: number | null
+          end_date?: string | null
+          id?: string
+          is_ongoing?: boolean
+          name?: string
+          start_date?: string | null
+        }
+        Relationships: []
+      }
       students: {
         Row: {
+          cohort_id: string | null
           created_at: string
           full_name: string
+          guardian_email: string | null
+          guardian_name: string | null
           id: string
+          student_email: string | null
           student_id: string
           year_level: string
         }
         Insert: {
+          cohort_id?: string | null
           created_at?: string
           full_name: string
+          guardian_email?: string | null
+          guardian_name?: string | null
           id?: string
+          student_email?: string | null
           student_id: string
           year_level: string
         }
         Update: {
+          cohort_id?: string | null
           created_at?: string
           full_name?: string
+          guardian_email?: string | null
+          guardian_name?: string | null
           id?: string
+          student_email?: string | null
           student_id?: string
           year_level?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "students_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
