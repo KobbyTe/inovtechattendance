@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { AttendanceRecord, Student } from "@/types";
+import type { AttendanceRecord, Cohort, Student } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,12 +13,15 @@ import {
 import { formatDuration, formatTime, initials, MEETING_DAYS } from "@/lib/attendance";
 import { format, parseISO } from "date-fns";
 import { Download } from "lucide-react";
+import { CohortBadge } from "@/components/admin/RosterTab";
 
 export function RecordsTab() {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
+  const [cohorts, setCohorts] = useState<Cohort[]>([]);
   const [student, setStudent] = useState<string>("all");
   const [day, setDay] = useState<string>("all");
+  const [cohortFilter, setCohortFilter] = useState<string>("all");
 
   useEffect(() => {
     supabase
@@ -32,16 +35,34 @@ export function RecordsTab() {
       .select("*")
       .order("full_name")
       .then(({ data }) => setStudents((data ?? []) as Student[]));
+    supabase
+      .from("cohorts")
+      .select("*")
+      .order("name")
+      .then(({ data }) => setCohorts((data ?? []) as Cohort[]));
   }, []);
+
+  const studentById = useMemo(
+    () => new Map(students.map((s) => [s.student_id, s])),
+    [students]
+  );
+  const cohortById = useMemo(
+    () => new Map(cohorts.map((c) => [c.id, c])),
+    [cohorts]
+  );
 
   const filtered = useMemo(
     () =>
-      records.filter(
-        (r) =>
-          (student === "all" || r.student_id === student) &&
-          (day === "all" || r.day_name === day)
-      ),
-    [records, student, day]
+      records.filter((r) => {
+        if (student !== "all" && r.student_id !== student) return false;
+        if (day !== "all" && r.day_name !== day) return false;
+        if (cohortFilter !== "all") {
+          const s = studentById.get(r.student_id);
+          if (!s || s.cohort_id !== cohortFilter) return false;
+        }
+        return true;
+      }),
+    [records, student, day, cohortFilter, studentById]
   );
 
   const grouped = useMemo(() => {
@@ -54,16 +75,21 @@ export function RecordsTab() {
   }, [filtered]);
 
   function exportCSV() {
-    const header = ["Date", "Day", "Student ID", "Name", "Clock In", "Clock Out", "Duration"];
-    const rows = filtered.map((r) => [
-      r.date,
-      r.day_name,
-      r.student_id,
-      r.student_name,
-      r.clock_in,
-      r.clock_out ?? "",
-      formatDuration(r.clock_in, r.clock_out),
-    ]);
+    const header = ["Date", "Day", "Student ID", "Name", "Cohort", "Clock In", "Clock Out", "Duration"];
+    const rows = filtered.map((r) => {
+      const s = studentById.get(r.student_id);
+      const cohort = s?.cohort_id ? cohortById.get(s.cohort_id) : undefined;
+      return [
+        r.date,
+        r.day_name,
+        r.student_id,
+        r.student_name,
+        cohort?.name ?? "",
+        r.clock_in,
+        r.clock_out ?? "",
+        formatDuration(r.clock_in, r.clock_out),
+      ];
+    });
     const csv = [header, ...rows]
       .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
       .join("\n");
@@ -88,6 +114,19 @@ export function RecordsTab() {
             {students.map((s) => (
               <SelectItem key={s.student_id} value={s.student_id}>
                 {s.full_name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={cohortFilter} onValueChange={setCohortFilter}>
+          <SelectTrigger className="h-11 sm:w-44">
+            <SelectValue placeholder="All cohorts" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All cohorts</SelectItem>
+            {cohorts.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -136,26 +175,33 @@ export function RecordsTab() {
                   </span>
                 </div>
                 <ul className="divide-y divide-border">
-                  {rows.map((r) => (
-                    <li key={r.id} className="px-4 py-2.5 flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-accent text-primary font-semibold flex items-center justify-center text-xs">
-                        {initials(r.student_name)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{r.student_name}</p>
-                        <p className="text-xs text-muted-foreground">{r.student_id}</p>
-                      </div>
-                      <div className="text-right text-xs">
-                        <p>
-                          {formatTime(r.clock_in)}
-                          {r.clock_out ? ` → ${formatTime(r.clock_out)}` : ""}
-                        </p>
-                        <p className="font-semibold">
-                          {formatDuration(r.clock_in, r.clock_out)}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
+                  {rows.map((r) => {
+                    const s = studentById.get(r.student_id);
+                    const cohort = s?.cohort_id ? cohortById.get(s.cohort_id) : undefined;
+                    return (
+                      <li key={r.id} className="px-4 py-2.5 flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-full bg-accent text-primary font-semibold flex items-center justify-center text-xs">
+                          {initials(r.student_name)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium truncate">{r.student_name}</p>
+                            {cohort && <CohortBadge cohort={cohort} />}
+                          </div>
+                          <p className="text-xs text-muted-foreground font-mono">{r.student_id}</p>
+                        </div>
+                        <div className="text-right text-xs">
+                          <p>
+                            {formatTime(r.clock_in)}
+                            {r.clock_out ? ` → ${formatTime(r.clock_out)}` : ""}
+                          </p>
+                          <p className="font-semibold">
+                            {formatDuration(r.clock_in, r.clock_out)}
+                          </p>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             );

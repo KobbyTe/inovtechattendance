@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import type { Student, AttendanceRecord } from "@/types";
+import type { Student, AttendanceRecord, Cohort } from "@/types";
 import {
   formatDateLong,
   getDayName,
@@ -22,6 +22,7 @@ export function ClockInForm() {
   const [error, setError] = useState<string | null>(null);
   const [shake, setShake] = useState(false);
   const [student, setStudent] = useState<Student | null>(null);
+  const [cohort, setCohort] = useState<Cohort | null>(null);
   const [status, setStatus] = useState<Status>("none");
   const [busy, setBusy] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -60,6 +61,7 @@ export function ClockInForm() {
     setStep(1);
     setIdInput("");
     setStudent(null);
+    setCohort(null);
     setStatus("none");
     setError(null);
     setSuccess(false);
@@ -103,6 +105,16 @@ export function ClockInForm() {
       }
       const s = data as Student;
       setStudent(s);
+      if (s.cohort_id) {
+        const { data: c } = await supabase
+          .from("cohorts")
+          .select("*")
+          .eq("id", s.cohort_id)
+          .maybeSingle();
+        setCohort((c as Cohort | null) ?? null);
+      } else {
+        setCohort(null);
+      }
       await refreshStatus(s);
       setStep(2);
     } catch (e) {
@@ -322,6 +334,19 @@ export function ClockInForm() {
                   <p className="text-xs text-blue-100/80 truncate">
                     {student.student_id} · {student.year_level}
                   </p>
+                  {cohort && (
+                    <span
+                      className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                      style={{
+                        background: `${cohort.color}33`,
+                        color: "#fff",
+                        border: `1px solid ${cohort.color}80`,
+                      }}
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full" style={{ background: cohort.color }} />
+                      {cohort.name}
+                    </span>
+                  )}
                 </div>
               </div>
             )}
