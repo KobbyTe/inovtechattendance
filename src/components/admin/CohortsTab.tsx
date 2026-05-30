@@ -85,26 +85,28 @@ export function CohortsTab() {
     if (!form.name.trim()) return toast.error("Name is required");
     setBusy(true);
     const code = generateCohortCode(form.name);
-    const payload: Record<string, unknown> = {
-      name: form.name.trim(),
-      code,
-      is_ongoing: form.is_ongoing,
-      color: form.color,
-    };
-    if (form.is_ongoing) {
-      payload.duration_weeks = null;
-      payload.start_date = null;
-      payload.end_date = null;
-    } else {
+    let duration_weeks: number | null = null;
+    let start_date: string | null = null;
+    let end_date: string | null = null;
+    if (!form.is_ongoing) {
       const weeks = parseInt(form.duration_weeks, 10);
       if (!weeks || weeks < 1) {
         setBusy(false);
         return toast.error("Enter a valid duration in weeks");
       }
-      payload.duration_weeks = weeks;
-      payload.start_date = form.start_date;
-      payload.end_date = computeEndDate(form.start_date, weeks);
+      duration_weeks = weeks;
+      start_date = form.start_date;
+      end_date = computeEndDate(form.start_date, weeks);
     }
+    const payload = {
+      name: form.name.trim(),
+      code,
+      is_ongoing: form.is_ongoing,
+      color: form.color,
+      duration_weeks,
+      start_date,
+      end_date,
+    };
 
     const { error } = form.id
       ? await supabase.from("cohorts").update(payload).eq("id", form.id)
