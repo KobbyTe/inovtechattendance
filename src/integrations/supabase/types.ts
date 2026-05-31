@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      absences: {
+        Row: {
+          created_at: string
+          date: string
+          day_name: string
+          id: string
+          student_id: string
+          student_name: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          day_name: string
+          id?: string
+          student_id: string
+          student_name: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          day_name?: string
+          id?: string
+          student_id?: string
+          student_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "absences_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["student_id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           google_sheet_id: string | null
