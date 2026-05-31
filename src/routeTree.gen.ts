@@ -13,6 +13,7 @@ import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as ApiPublicHooksAbsenceCheckRouteImport } from './routes/api/public/hooks/absence-check'
 
 const AttendanceRoute = AttendanceRouteImport.update({
   id: '/attendance',
@@ -34,18 +35,26 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/admin/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksAbsenceCheckRoute =
+  ApiPublicHooksAbsenceCheckRouteImport.update({
+    id: '/api/public/hooks/absence-check',
+    path: '/api/public/hooks/absence-check',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/attendance': typeof AttendanceRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
+  '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/attendance': typeof AttendanceRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin': typeof AdminIndexRoute
+  '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +62,30 @@ export interface FileRoutesById {
   '/attendance': typeof AttendanceRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
+  '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/attendance' | '/admin/login' | '/admin/'
+  fullPaths:
+    | '/'
+    | '/attendance'
+    | '/admin/login'
+    | '/admin/'
+    | '/api/public/hooks/absence-check'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/attendance' | '/admin/login' | '/admin'
-  id: '__root__' | '/' | '/attendance' | '/admin/login' | '/admin/'
+  to:
+    | '/'
+    | '/attendance'
+    | '/admin/login'
+    | '/admin'
+    | '/api/public/hooks/absence-check'
+  id:
+    | '__root__'
+    | '/'
+    | '/attendance'
+    | '/admin/login'
+    | '/admin/'
+    | '/api/public/hooks/absence-check'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,6 +93,7 @@ export interface RootRouteChildren {
   AttendanceRoute: typeof AttendanceRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  ApiPublicHooksAbsenceCheckRoute: typeof ApiPublicHooksAbsenceCheckRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -99,6 +126,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/absence-check': {
+      id: '/api/public/hooks/absence-check'
+      path: '/api/public/hooks/absence-check'
+      fullPath: '/api/public/hooks/absence-check'
+      preLoaderRoute: typeof ApiPublicHooksAbsenceCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -107,7 +141,18 @@ const rootRouteChildren: RootRouteChildren = {
   AttendanceRoute: AttendanceRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminIndexRoute: AdminIndexRoute,
+  ApiPublicHooksAbsenceCheckRoute: ApiPublicHooksAbsenceCheckRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
