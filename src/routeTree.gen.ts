@@ -13,6 +13,7 @@ import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as ApiPublicHooksSheetsSyncRouteImport } from './routes/api/public/hooks/sheets-sync'
 import { Route as ApiPublicHooksAbsenceCheckRouteImport } from './routes/api/public/hooks/absence-check'
 
 const AttendanceRoute = AttendanceRouteImport.update({
@@ -35,6 +36,12 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/admin/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksSheetsSyncRoute =
+  ApiPublicHooksSheetsSyncRouteImport.update({
+    id: '/api/public/hooks/sheets-sync',
+    path: '/api/public/hooks/sheets-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksAbsenceCheckRoute =
   ApiPublicHooksAbsenceCheckRouteImport.update({
     id: '/api/public/hooks/absence-check',
@@ -48,6 +55,7 @@ export interface FileRoutesByFullPath {
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
+  '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -55,6 +63,7 @@ export interface FileRoutesByTo {
   '/admin/login': typeof AdminLoginRoute
   '/admin': typeof AdminIndexRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
+  '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -63,6 +72,7 @@ export interface FileRoutesById {
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
+  '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -72,6 +82,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/'
     | '/api/public/hooks/absence-check'
+    | '/api/public/hooks/sheets-sync'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -79,6 +90,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin'
     | '/api/public/hooks/absence-check'
+    | '/api/public/hooks/sheets-sync'
   id:
     | '__root__'
     | '/'
@@ -86,6 +98,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/'
     | '/api/public/hooks/absence-check'
+    | '/api/public/hooks/sheets-sync'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -94,6 +107,7 @@ export interface RootRouteChildren {
   AdminLoginRoute: typeof AdminLoginRoute
   AdminIndexRoute: typeof AdminIndexRoute
   ApiPublicHooksAbsenceCheckRoute: typeof ApiPublicHooksAbsenceCheckRoute
+  ApiPublicHooksSheetsSyncRoute: typeof ApiPublicHooksSheetsSyncRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -126,6 +140,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/sheets-sync': {
+      id: '/api/public/hooks/sheets-sync'
+      path: '/api/public/hooks/sheets-sync'
+      fullPath: '/api/public/hooks/sheets-sync'
+      preLoaderRoute: typeof ApiPublicHooksSheetsSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/absence-check': {
       id: '/api/public/hooks/absence-check'
       path: '/api/public/hooks/absence-check'
@@ -142,6 +163,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
   AdminIndexRoute: AdminIndexRoute,
   ApiPublicHooksAbsenceCheckRoute: ApiPublicHooksAbsenceCheckRoute,
+  ApiPublicHooksSheetsSyncRoute: ApiPublicHooksSheetsSyncRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
