@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          google_sheet_id: string | null
+          id: string
+          last_sheets_sync_at: string | null
+          singleton: boolean
+          updated_at: string
+        }
+        Insert: {
+          google_sheet_id?: string | null
+          id?: string
+          last_sheets_sync_at?: string | null
+          singleton?: boolean
+          updated_at?: string
+        }
+        Update: {
+          google_sheet_id?: string | null
+          id?: string
+          last_sheets_sync_at?: string | null
+          singleton?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       attendance: {
         Row: {
           clock_in: string
