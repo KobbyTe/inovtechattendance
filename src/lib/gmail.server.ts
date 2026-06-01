@@ -80,21 +80,49 @@ export function absenceEmail(opts: {
   studentName: string;
   dayName: string;
   date: string;
+  subjectTemplate?: string | null;
+  bodyTemplate?: string | null;
+  header?: string | null;
+  signature?: string | null;
 }): { subject: string; html: string; text: string } {
   const greeting = opts.guardianName ? `Hello ${opts.guardianName},` : "Hello,";
-  const subject = `Absence notice: ${opts.studentName} — ${opts.dayName}, ${opts.date}`;
-  const text = `${greeting}
+  const vars: Record<string, string> = {
+    guardianName: opts.guardianName ?? "",
+    studentName: opts.studentName,
+    dayName: opts.dayName,
+    date: opts.date,
+    greeting,
+  };
+  const render = (tpl: string) =>
+    tpl.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k) => vars[k] ?? "");
 
-This is to notify you that ${opts.studentName} was not marked present at the Inovtech bootcamp meeting on ${opts.dayName}, ${opts.date}.
+  const subjectTpl =
+    opts.subjectTemplate?.trim() ||
+    "Absence notice: {{studentName}} — {{dayName}}, {{date}}";
+  const bodyTpl =
+    opts.bodyTemplate?.trim() ||
+    "{{greeting}}\n\nThis is to notify you that {{studentName}} was not marked present at the bootcamp meeting on {{dayName}}, {{date}}.\n\nIf this is unexpected, please contact the program team.";
+  const header = (opts.header ?? "").trim();
+  const signature = (opts.signature ?? "— Inovtech Student Attendance").trim();
 
-If this is unexpected, please contact the program team.
+  const subject = render(subjectTpl);
+  const renderedBody = render(bodyTpl);
+  const renderedHeader = header ? render(header) : "";
 
-— Inovtech Student Attendance`;
+  const text = [renderedHeader, renderedBody, signature].filter(Boolean).join("\n\n");
+
+  const esc = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const toHtmlParas = (s: string) =>
+    esc(s)
+      .split(/\n{2,}/)
+      .map((p) => `<p>${p.replace(/\n/g, "<br/>")}</p>`)
+      .join("");
+
   const html = `<div style="font-family:Arial,sans-serif;color:#111;line-height:1.5;max-width:560px">
-    <p>${greeting}</p>
-    <p>This is to notify you that <strong>${opts.studentName}</strong> was not marked present at the Inovtech bootcamp meeting on <strong>${opts.dayName}, ${opts.date}</strong>.</p>
-    <p>If this is unexpected, please contact the program team.</p>
-    <p style="color:#666;font-size:12px;margin-top:24px">— Inovtech Student Attendance</p>
+    ${renderedHeader ? `<div style="font-weight:600;margin-bottom:12px">${esc(renderedHeader)}</div>` : ""}
+    ${toHtmlParas(renderedBody)}
+    <p style="color:#666;font-size:12px;margin-top:24px;white-space:pre-line">${esc(signature)}</p>
   </div>`;
   return { subject, html, text };
 }
