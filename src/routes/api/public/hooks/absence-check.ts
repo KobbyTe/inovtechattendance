@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { MEETING_DAYS } from "@/lib/attendance";
 import { format } from "date-fns";
+import { sendGmail, absenceEmail } from "@/lib/gmail.server";
 
 export const Route = createFileRoute("/api/public/hooks/absence-check")({
   server: {
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/api/public/hooks/absence-check")({
 
         const [{ data: students, error: sErr }, { data: present, error: aErr }, { data: existing, error: exErr }] =
           await Promise.all([
-            supabaseAdmin.from("students").select("student_id, full_name"),
+            supabaseAdmin.from("students").select("student_id, full_name, guardian_name, guardian_email"),
             supabaseAdmin.from("attendance").select("student_id").eq("date", date),
             supabaseAdmin.from("absences").select("student_id").eq("date", date),
           ]);
@@ -47,7 +48,33 @@ export const Route = createFileRoute("/api/public/hooks/absence-check")({
         const { error: insErr } = await supabaseAdmin.from("absences").insert(rows);
         if (insErr) return Response.json({ ok: false, error: insErr.message }, { status: 500 });
 
-        return Response.json({ ok: true, date, dayName, inserted: rows.length });
+        // Email guardians (best-effort, in parallel)
+        const emailResults = await Promise.all(
+          absent.map(async (s) => {
+            if (!s.guardian_email) return { student_id: s.student_id, skipped: "no guardian email" };
+            const msg = absenceEmail({
+              guardianName: s.guardian_name,
+              studentName: s.full_name,
+              dayName,
+              date,
+            });
+            const r = await sendGmail({ to: s.guardian_email, ...msg });
+            return { student_id: s.student_id, ...r };
+          }),
+        );
+        const emailed = emailResults.filter((r) => "ok" in r && r.ok).length;
+        const emailErrors = emailResults
+          .filter((r) => "ok" in r && r.ok === false)
+          .map((r) => ("error" in r ? r.error : ""));
+
+        return Response.json({
+          ok: true,
+          date,
+          dayName,
+          inserted: rows.length,
+          emailed,
+          emailErrors: emailErrors.slice(0, 5),
+        });
       },
     },
   },
