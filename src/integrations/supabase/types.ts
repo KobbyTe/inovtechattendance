@@ -51,6 +51,10 @@ export type Database = {
       }
       app_settings: {
         Row: {
+          email_body: string | null
+          email_header: string | null
+          email_signature: string | null
+          email_subject: string | null
           google_sheet_id: string | null
           id: string
           last_sheets_sync_at: string | null
@@ -58,6 +62,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          email_body?: string | null
+          email_header?: string | null
+          email_signature?: string | null
+          email_subject?: string | null
           google_sheet_id?: string | null
           id?: string
           last_sheets_sync_at?: string | null
@@ -65,6 +73,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          email_body?: string | null
+          email_header?: string | null
+          email_signature?: string | null
+          email_subject?: string | null
           google_sheet_id?: string | null
           id?: string
           last_sheets_sync_at?: string | null
