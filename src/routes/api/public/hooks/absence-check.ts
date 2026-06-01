@@ -16,12 +16,21 @@ export const Route = createFileRoute("/api/public/hooks/absence-check")({
           return Response.json({ ok: true, skipped: true, reason: "not a meeting day", dayName });
         }
 
-        const [{ data: students, error: sErr }, { data: present, error: aErr }, { data: existing, error: exErr }] =
-          await Promise.all([
-            supabaseAdmin.from("students").select("student_id, full_name, guardian_name, guardian_email"),
-            supabaseAdmin.from("attendance").select("student_id").eq("date", date),
-            supabaseAdmin.from("absences").select("student_id").eq("date", date),
-          ]);
+        const [
+          { data: students, error: sErr },
+          { data: present, error: aErr },
+          { data: existing, error: exErr },
+          { data: settings },
+        ] = await Promise.all([
+          supabaseAdmin.from("students").select("student_id, full_name, guardian_name, guardian_email"),
+          supabaseAdmin.from("attendance").select("student_id").eq("date", date),
+          supabaseAdmin.from("absences").select("student_id").eq("date", date),
+          supabaseAdmin
+            .from("app_settings")
+            .select("email_subject,email_body,email_header,email_signature")
+            .eq("singleton", true)
+            .maybeSingle(),
+        ]);
         if (sErr || aErr || exErr) {
           return Response.json(
             { ok: false, error: sErr?.message ?? aErr?.message ?? exErr?.message },
@@ -57,6 +66,10 @@ export const Route = createFileRoute("/api/public/hooks/absence-check")({
               studentName: s.full_name,
               dayName,
               date,
+              subjectTemplate: settings?.email_subject ?? null,
+              bodyTemplate: settings?.email_body ?? null,
+              header: settings?.email_header ?? null,
+              signature: settings?.email_signature ?? null,
             });
             const r = await sendGmail({ to: s.guardian_email, ...msg });
             return { student_id: s.student_id, ...r };
