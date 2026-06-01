@@ -4,9 +4,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { syncToGoogleSheets } from "@/lib/sheets.functions";
-import { ExternalLink, RefreshCw, Sheet } from "lucide-react";
+import { ExternalLink, Mail, RefreshCw, Sheet } from "lucide-react";
 import { format } from "date-fns";
 
 function extractSheetId(input: string): string {
@@ -25,10 +26,21 @@ export function SettingsTab() {
   const [syncing, setSyncing] = useState(false);
   const syncFn = useServerFn(syncToGoogleSheets);
 
+  const DEFAULT_SUBJECT = "Absence notice: {{studentName}} — {{dayName}}, {{date}}";
+  const DEFAULT_BODY =
+    "{{greeting}}\n\nThis is to notify you that {{studentName}} was not marked present at the bootcamp meeting on {{dayName}}, {{date}}.\n\nIf this is unexpected, please contact the program team.";
+  const DEFAULT_SIGNATURE = "— Inovtech Student Attendance";
+
+  const [emailSubject, setEmailSubject] = useState(DEFAULT_SUBJECT);
+  const [emailBody, setEmailBody] = useState(DEFAULT_BODY);
+  const [emailHeader, setEmailHeader] = useState("");
+  const [emailSignature, setEmailSignature] = useState(DEFAULT_SIGNATURE);
+  const [savingTpl, setSavingTpl] = useState(false);
+
   useEffect(() => {
     supabase
       .from("app_settings")
-      .select("google_sheet_id,last_sheets_sync_at")
+      .select("google_sheet_id,last_sheets_sync_at,email_subject,email_body,email_header,email_signature")
       .eq("singleton", true)
       .maybeSingle()
       .then(({ data }) => {
@@ -37,6 +49,10 @@ export function SettingsTab() {
           setSheetInput(data.google_sheet_id);
         }
         if (data?.last_sheets_sync_at) setLastSync(data.last_sheets_sync_at);
+        if (data?.email_subject) setEmailSubject(data.email_subject);
+        if (data?.email_body) setEmailBody(data.email_body);
+        if (data?.email_header != null) setEmailHeader(data.email_header);
+        if (data?.email_signature) setEmailSignature(data.email_signature);
       });
   }, []);
 
@@ -69,8 +85,99 @@ export function SettingsTab() {
     }
   }
 
+  async function saveTemplate() {
+    setSavingTpl(true);
+    const { data: existing } = await supabase
+      .from("app_settings")
+      .select("id")
+      .eq("singleton", true)
+      .maybeSingle();
+    const payload = {
+      singleton: true,
+      email_subject: emailSubject,
+      email_body: emailBody,
+      email_header: emailHeader,
+      email_signature: emailSignature,
+      updated_at: new Date().toISOString(),
+    };
+    const { error } = existing
+      ? await supabase.from("app_settings").update(payload).eq("id", existing.id)
+      : await supabase.from("app_settings").insert(payload);
+    setSavingTpl(false);
+    if (error) return toast.error(error.message);
+    toast.success("Email template saved");
+  }
+
+  function resetTemplate() {
+    setEmailSubject(DEFAULT_SUBJECT);
+    setEmailBody(DEFAULT_BODY);
+    setEmailHeader("");
+    setEmailSignature(DEFAULT_SIGNATURE);
+  }
+
   return (
     <div className="grid gap-6 max-w-2xl">
+      <section className="rounded-xl bg-card border border-border p-5">
+        <div className="flex items-center gap-2">
+          <Mail className="h-5 w-5 text-primary" />
+          <h3 className="text-base font-semibold">Guardian absence email</h3>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1">
+          Customize the email sent to guardians when a student is marked absent. Use the placeholders below to insert dynamic values.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-1.5 text-xs">
+          {["{{guardianName}}", "{{studentName}}", "{{dayName}}", "{{date}}", "{{greeting}}"].map((t) => (
+            <code key={t} className="rounded bg-muted px-1.5 py-0.5 font-mono">
+              {t}
+            </code>
+          ))}
+        </div>
+        <div className="space-y-3 mt-4">
+          <div className="space-y-2">
+            <Label>Header (optional)</Label>
+            <Input
+              value={emailHeader}
+              onChange={(e) => setEmailHeader(e.target.value)}
+              placeholder="e.g. Inovtech Bootcamp — Attendance"
+              className="h-11"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Subject</Label>
+            <Input
+              value={emailSubject}
+              onChange={(e) => setEmailSubject(e.target.value)}
+              className="h-11"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Message</Label>
+            <Textarea
+              value={emailBody}
+              onChange={(e) => setEmailBody(e.target.value)}
+              rows={7}
+              className="font-sans"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Signature</Label>
+            <Textarea
+              value={emailSignature}
+              onChange={(e) => setEmailSignature(e.target.value)}
+              rows={3}
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button onClick={saveTemplate} disabled={savingTpl} className="h-11">
+              {savingTpl ? "Saving…" : "Save template"}
+            </Button>
+            <Button variant="outline" onClick={resetTemplate} className="h-11">
+              Reset to default
+            </Button>
+          </div>
+        </div>
+      </section>
+
       <section className="rounded-xl bg-card border border-border p-5">
         <div className="flex items-center gap-2">
           <Sheet className="h-5 w-5 text-primary" />
