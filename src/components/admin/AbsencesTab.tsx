@@ -61,7 +61,10 @@ export function AbsencesTab() {
       const json = await res.json();
       if (!json.ok) throw new Error(json.error ?? "Failed");
       if (json.skipped) toast.info(`Skipped — ${json.reason}`);
-      else toast.success(`Recorded ${json.inserted} absence(s) for ${json.date}`);
+      else
+        toast.success(
+          `Recorded ${json.inserted} absence(s) · ${json.emailed ?? 0} guardian email(s) sent`,
+        );
       await load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Check failed");
