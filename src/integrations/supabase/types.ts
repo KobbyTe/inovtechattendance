@@ -53,6 +53,7 @@ export type Database = {
         Row: {
           email_body: string | null
           email_header: string | null
+          email_header_image_url: string | null
           email_signature: string | null
           email_subject: string | null
           google_sheet_id: string | null
@@ -64,6 +65,7 @@ export type Database = {
         Insert: {
           email_body?: string | null
           email_header?: string | null
+          email_header_image_url?: string | null
           email_signature?: string | null
           email_subject?: string | null
           google_sheet_id?: string | null
@@ -75,6 +77,7 @@ export type Database = {
         Update: {
           email_body?: string | null
           email_header?: string | null
+          email_header_image_url?: string | null
           email_signature?: string | null
           email_subject?: string | null
           google_sheet_id?: string | null
