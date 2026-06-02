@@ -169,12 +169,60 @@ export function SettingsTab() {
         </div>
         <div className="space-y-3 mt-4">
           <div className="space-y-2">
-            <Label>Header (optional)</Label>
-            <Input
-              value={emailHeader}
-              onChange={(e) => setEmailHeader(e.target.value)}
-              placeholder="e.g. Inovtech Bootcamp — Attendance"
-              className="h-11"
+            <Label>Header image (optional)</Label>
+            <p className="text-xs text-muted-foreground">
+              Upload a banner image. Required size: 600–700 px wide, 70–200 px tall.
+            </p>
+            {emailHeaderImageUrl ? (
+              <div className="rounded-lg border border-border p-3 space-y-2 bg-muted/30">
+                <img
+                  src={emailHeaderImageUrl}
+                  alt="Email header preview"
+                  className="max-w-full h-auto rounded"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileRef.current?.click()}
+                    disabled={uploadingHeader}
+                  >
+                    <ImagePlus className="mr-1.5 h-4 w-4" />
+                    Replace
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEmailHeaderImageUrl("")}
+                  >
+                    <Trash2 className="mr-1.5 h-4 w-4" />
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploadingHeader}
+                className="h-11"
+              >
+                <ImagePlus className="mr-2 h-4 w-4" />
+                {uploadingHeader ? "Uploading…" : "Upload header image"}
+              </Button>
+            )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleHeaderFile(f);
+              }}
             />
           </div>
           <div className="space-y-2">
