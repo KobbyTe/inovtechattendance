@@ -82,7 +82,7 @@ export function absenceEmail(opts: {
   date: string;
   subjectTemplate?: string | null;
   bodyTemplate?: string | null;
-  header?: string | null;
+  headerImageUrl?: string | null;
   signature?: string | null;
 }): { subject: string; html: string; text: string } {
   const greeting = opts.guardianName ? `Hello ${opts.guardianName},` : "Hello,";
@@ -102,14 +102,13 @@ export function absenceEmail(opts: {
   const bodyTpl =
     opts.bodyTemplate?.trim() ||
     "{{greeting}}\n\nThis is to notify you that {{studentName}} was not marked present at the bootcamp meeting on {{dayName}}, {{date}}.\n\nIf this is unexpected, please contact the program team.";
-  const header = (opts.header ?? "").trim();
   const signature = (opts.signature ?? "— Inovtech Student Attendance").trim();
 
   const subject = render(subjectTpl);
   const renderedBody = render(bodyTpl);
-  const renderedHeader = header ? render(header) : "";
+  const headerImageUrl = (opts.headerImageUrl ?? "").trim();
 
-  const text = [renderedHeader, renderedBody, signature].filter(Boolean).join("\n\n");
+  const text = [renderedBody, signature].filter(Boolean).join("\n\n");
 
   const esc = (s: string) =>
     s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -119,8 +118,8 @@ export function absenceEmail(opts: {
       .map((p) => `<p>${p.replace(/\n/g, "<br/>")}</p>`)
       .join("");
 
-  const html = `<div style="font-family:Arial,sans-serif;color:#111;line-height:1.5;max-width:560px">
-    ${renderedHeader ? `<div style="font-weight:600;margin-bottom:12px">${esc(renderedHeader)}</div>` : ""}
+  const html = `<div style="font-family:Arial,sans-serif;color:#111;line-height:1.5;max-width:680px">
+    ${headerImageUrl ? `<div style="margin-bottom:16px"><img src="${esc(headerImageUrl)}" alt="" style="display:block;max-width:100%;height:auto;border:0;outline:none;text-decoration:none" /></div>` : ""}
     ${toHtmlParas(renderedBody)}
     <p style="color:#666;font-size:12px;margin-top:24px;white-space:pre-line">${esc(signature)}</p>
   </div>`;
