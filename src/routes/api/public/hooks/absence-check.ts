@@ -27,7 +27,7 @@ export const Route = createFileRoute("/api/public/hooks/absence-check")({
           supabaseAdmin.from("absences").select("student_id").eq("date", date),
           supabaseAdmin
             .from("app_settings")
-            .select("email_subject,email_body,email_header,email_signature")
+            .select("email_subject,email_body,email_header_image_url,email_signature")
             .eq("singleton", true)
             .maybeSingle(),
         ]);
@@ -68,7 +68,7 @@ export const Route = createFileRoute("/api/public/hooks/absence-check")({
               date,
               subjectTemplate: settings?.email_subject ?? null,
               bodyTemplate: settings?.email_body ?? null,
-              header: settings?.email_header ?? null,
+              headerImageUrl: settings?.email_header_image_url ?? null,
               signature: settings?.email_signature ?? null,
             });
             const r = await sendGmail({ to: s.guardian_email, ...msg });

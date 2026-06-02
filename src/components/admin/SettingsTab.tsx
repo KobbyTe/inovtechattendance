@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { syncToGoogleSheets } from "@/lib/sheets.functions";
-import { ExternalLink, Mail, RefreshCw, Sheet } from "lucide-react";
+import { ExternalLink, ImagePlus, Mail, RefreshCw, Sheet, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 function extractSheetId(input: string): string {
@@ -33,14 +33,16 @@ export function SettingsTab() {
 
   const [emailSubject, setEmailSubject] = useState(DEFAULT_SUBJECT);
   const [emailBody, setEmailBody] = useState(DEFAULT_BODY);
-  const [emailHeader, setEmailHeader] = useState("");
+  const [emailHeaderImageUrl, setEmailHeaderImageUrl] = useState<string>("");
   const [emailSignature, setEmailSignature] = useState(DEFAULT_SIGNATURE);
   const [savingTpl, setSavingTpl] = useState(false);
+  const [uploadingHeader, setUploadingHeader] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     supabase
       .from("app_settings")
-      .select("google_sheet_id,last_sheets_sync_at,email_subject,email_body,email_header,email_signature")
+      .select("google_sheet_id,last_sheets_sync_at,email_subject,email_body,email_header_image_url,email_signature")
       .eq("singleton", true)
       .maybeSingle()
       .then(({ data }) => {
@@ -51,7 +53,7 @@ export function SettingsTab() {
         if (data?.last_sheets_sync_at) setLastSync(data.last_sheets_sync_at);
         if (data?.email_subject) setEmailSubject(data.email_subject);
         if (data?.email_body) setEmailBody(data.email_body);
-        if (data?.email_header != null) setEmailHeader(data.email_header);
+        if (data?.email_header_image_url) setEmailHeaderImageUrl(data.email_header_image_url);
         if (data?.email_signature) setEmailSignature(data.email_signature);
       });
   }, []);
@@ -96,7 +98,7 @@ export function SettingsTab() {
       singleton: true,
       email_subject: emailSubject,
       email_body: emailBody,
-      email_header: emailHeader,
+      email_header_image_url: emailHeaderImageUrl || null,
       email_signature: emailSignature,
       updated_at: new Date().toISOString(),
     };
@@ -111,8 +113,41 @@ export function SettingsTab() {
   function resetTemplate() {
     setEmailSubject(DEFAULT_SUBJECT);
     setEmailBody(DEFAULT_BODY);
-    setEmailHeader("");
     setEmailSignature(DEFAULT_SIGNATURE);
+  }
+
+  async function handleHeaderFile(file: File) {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    const dims = await new Promise<{ w: number; h: number } | null>((res) => {
+      img.onload = () => res({ w: img.naturalWidth, h: img.naturalHeight });
+      img.onerror = () => res(null);
+      img.src = url;
+    });
+    URL.revokeObjectURL(url);
+    if (!dims) return toast.error("Could not read image");
+    if (dims.w < 600 || dims.w > 700 || dims.h < 70 || dims.h > 200) {
+      return toast.error(
+        `Image must be 600–700 px wide and 70–200 px tall. Yours is ${dims.w}×${dims.h}.`,
+      );
+    }
+    setUploadingHeader(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+      const path = `headers/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("email-assets")
+        .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("email-assets").getPublicUrl(path);
+      setEmailHeaderImageUrl(data.publicUrl);
+      toast.success("Header image uploaded — remember to save the template");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploadingHeader(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
   }
 
   return (
@@ -134,12 +169,60 @@ export function SettingsTab() {
         </div>
         <div className="space-y-3 mt-4">
           <div className="space-y-2">
-            <Label>Header (optional)</Label>
-            <Input
-              value={emailHeader}
-              onChange={(e) => setEmailHeader(e.target.value)}
-              placeholder="e.g. Inovtech Bootcamp — Attendance"
-              className="h-11"
+            <Label>Header image (optional)</Label>
+            <p className="text-xs text-muted-foreground">
+              Upload a banner image. Required size: 600–700 px wide, 70–200 px tall.
+            </p>
+            {emailHeaderImageUrl ? (
+              <div className="rounded-lg border border-border p-3 space-y-2 bg-muted/30">
+                <img
+                  src={emailHeaderImageUrl}
+                  alt="Email header preview"
+                  className="max-w-full h-auto rounded"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileRef.current?.click()}
+                    disabled={uploadingHeader}
+                  >
+                    <ImagePlus className="mr-1.5 h-4 w-4" />
+                    Replace
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEmailHeaderImageUrl("")}
+                  >
+                    <Trash2 className="mr-1.5 h-4 w-4" />
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploadingHeader}
+                className="h-11"
+              >
+                <ImagePlus className="mr-2 h-4 w-4" />
+                {uploadingHeader ? "Uploading…" : "Upload header image"}
+              </Button>
+            )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleHeaderFile(f);
+              }}
             />
           </div>
           <div className="space-y-2">
