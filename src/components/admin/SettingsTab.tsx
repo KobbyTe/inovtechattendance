@@ -349,6 +349,61 @@ export function SettingsTab() {
 
       <section className="rounded-xl bg-card border border-border p-5">
         <div className="flex items-center gap-2">
+          <Mail className="h-5 w-5 text-primary" />
+          <h3 className="text-base font-semibold">Check-in / check-out emails</h3>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1">
+          Customize the confirmation emails sent to the student and the guardian when a student clocks in or clocks out. The header image and signature above are reused.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-1.5 text-xs">
+          {["{{studentName}}", "{{recipientName}}", "{{guardianName}}", "{{dayName}}", "{{date}}", "{{time}}", "{{action}}", "{{verb}}", "{{greeting}}"].map((t) => (
+            <code key={t} className="rounded bg-muted px-1.5 py-0.5 font-mono">{t}</code>
+          ))}
+        </div>
+        <div className="space-y-6 mt-4">
+          {[
+            { key: "clockin_student", title: "Clock-in — to student" },
+            { key: "clockin_guardian", title: "Clock-in — to guardian" },
+            { key: "clockout_student", title: "Clock-out — to student" },
+            { key: "clockout_guardian", title: "Clock-out — to guardian" },
+          ].map((g) => {
+            const subjKey = `${g.key}_subject` as keyof typeof clockTpl;
+            const bodyKey = `${g.key}_body` as keyof typeof clockTpl;
+            return (
+              <div key={g.key} className="space-y-3 rounded-lg border border-border p-4">
+                <h4 className="text-sm font-semibold">{g.title}</h4>
+                <div className="space-y-2">
+                  <Label>Subject</Label>
+                  <Input
+                    value={clockTpl[subjKey]}
+                    onChange={(e) => setClockTpl((p) => ({ ...p, [subjKey]: e.target.value }))}
+                    className="h-11"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Message</Label>
+                  <Textarea
+                    value={clockTpl[bodyKey]}
+                    onChange={(e) => setClockTpl((p) => ({ ...p, [bodyKey]: e.target.value }))}
+                    rows={6}
+                  />
+                </div>
+              </div>
+            );
+          })}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button onClick={saveClockTemplates} disabled={savingClock} className="h-11">
+              {savingClock ? "Saving…" : "Save templates"}
+            </Button>
+            <Button variant="outline" onClick={resetClockTemplates} className="h-11">
+              Reset to defaults
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-xl bg-card border border-border p-5">
+        <div className="flex items-center gap-2">
           <Sheet className="h-5 w-5 text-primary" />
           <h3 className="text-base font-semibold">Google Sheets sync</h3>
         </div>
