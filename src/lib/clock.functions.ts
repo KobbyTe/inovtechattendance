@@ -3,6 +3,55 @@ import { z } from "zod";
 import { format } from "date-fns";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { verifyQrToken } from "./attendance-qr.server";
+import { sendGmail, clockEventEmail } from "./gmail.server";
+
+async function sendClockNotifications(params: {
+  studentName: string;
+  studentEmail: string | null;
+  guardianName: string | null;
+  guardianEmail: string | null;
+  action: "in" | "out";
+  now: Date;
+}) {
+  try {
+    const { data: settings } = await supabaseAdmin
+      .from("app_settings")
+      .select("email_header_image_url,email_signature")
+      .eq("singleton", true)
+      .maybeSingle();
+
+    const common = {
+      studentName: params.studentName,
+      action: params.action,
+      dayName: format(params.now, "EEEE"),
+      date: format(params.now, "yyyy-MM-dd"),
+      time: format(params.now, "h:mm a"),
+      headerImageUrl: settings?.email_header_image_url ?? null,
+      signature: settings?.email_signature ?? null,
+    };
+
+    const sends: Promise<unknown>[] = [];
+    if (params.studentEmail) {
+      const msg = clockEventEmail({
+        ...common,
+        audience: "student",
+        recipientName: params.studentName,
+      });
+      sends.push(sendGmail({ to: params.studentEmail, ...msg }));
+    }
+    if (params.guardianEmail) {
+      const msg = clockEventEmail({
+        ...common,
+        audience: "guardian",
+        recipientName: params.guardianName,
+      });
+      sends.push(sendGmail({ to: params.guardianEmail, ...msg }));
+    }
+    await Promise.all(sends);
+  } catch (e) {
+    console.error("clock notification failed", e);
+  }
+}
 
 const tokenSchema = z.string().min(1).max(512);
 const studentIdSchema = z.string().trim().min(1).max(64).regex(/^[A-Za-z0-9_-]+$/);
@@ -90,6 +139,19 @@ export const clockAction = createServerFn({ method: "POST" })
         day_name: dayName,
       });
       if (error) throw new Error(error.message);
+      const { data: contacts } = await supabaseAdmin
+        .from("students")
+        .select("student_email, guardian_name, guardian_email")
+        .eq("student_id", s.student_id)
+        .maybeSingle();
+      await sendClockNotifications({
+        studentName: s.full_name,
+        studentEmail: contacts?.student_email ?? null,
+        guardianName: contacts?.guardian_name ?? null,
+        guardianEmail: contacts?.guardian_email ?? null,
+        action: "in",
+        now,
+      });
       return { status: "active" as const };
     }
 
@@ -108,5 +170,18 @@ export const clockAction = createServerFn({ method: "POST" })
       .update({ clock_out: now.toISOString() })
       .eq("id", open.id);
     if (error) throw new Error(error.message);
+    const { data: contacts } = await supabaseAdmin
+      .from("students")
+      .select("student_email, guardian_name, guardian_email")
+      .eq("student_id", s.student_id)
+      .maybeSingle();
+    await sendClockNotifications({
+      studentName: s.full_name,
+      studentEmail: contacts?.student_email ?? null,
+      guardianName: contacts?.guardian_name ?? null,
+      guardianEmail: contacts?.guardian_email ?? null,
+      action: "out",
+      now,
+    });
     return { status: "complete" as const };
   });
