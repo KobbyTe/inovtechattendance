@@ -3,26 +3,33 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, LogIn, LogOut, ShieldChec
 import { AnimatePresence, motion } from "framer-motion";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import type { Student, AttendanceRecord, Cohort } from "@/types";
+import { useServerFn } from "@tanstack/react-start";
+import { lookupStudentForClockIn, clockAction } from "@/lib/clock.functions";
 import {
   formatDateLong,
   getDayName,
   initials,
   isMeetingDay,
-  todayDateStr,
 } from "@/lib/attendance";
 
 type Status = "none" | "active" | "complete";
+type StudentLite = {
+  id: string;
+  full_name: string;
+  student_id: string;
+  year_level: string;
+  cohort_id: string | null;
+};
+type CohortLite = { id: string; name: string; color: string };
 
-export function ClockInForm() {
+export function ClockInForm({ token }: { token: string }) {
   const [step, setStep] = useState<1 | 2>(1);
   const [idInput, setIdInput] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shake, setShake] = useState(false);
-  const [student, setStudent] = useState<Student | null>(null);
-  const [cohort, setCohort] = useState<Cohort | null>(null);
+  const [student, setStudent] = useState<StudentLite | null>(null);
+  const [cohort, setCohort] = useState<CohortLite | null>(null);
   const [status, setStatus] = useState<Status>("none");
   const [busy, setBusy] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -30,6 +37,8 @@ export function ClockInForm() {
   const [now, setNow] = useState(() => new Date());
   const inputRef = useRef<HTMLInputElement>(null);
   const meetingDay = isMeetingDay(now);
+  const lookupFn = useServerFn(lookupStudentForClockIn);
+  const actionFn = useServerFn(clockAction);
 
   // Tick clock
   useEffect(() => {
@@ -68,21 +77,6 @@ export function ClockInForm() {
     setCountdown(null);
   }
 
-  async function refreshStatus(s: Student) {
-    const today = todayDateStr();
-    const { data } = await supabase
-      .from("attendance")
-      .select("*")
-      .eq("student_id", s.student_id)
-      .eq("date", today)
-      .order("clock_in", { ascending: false })
-      .limit(1);
-    const rec = (data?.[0] ?? null) as AttendanceRecord | null;
-    if (!rec) setStatus("none");
-    else if (rec.clock_out) setStatus("complete");
-    else setStatus("active");
-  }
-
   async function verifyId(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -93,33 +87,15 @@ export function ClockInForm() {
     }
     setVerifying(true);
     try {
-      const { data, error: qErr } = await supabase
-        .from("students")
-        .select("*")
-        .ilike("student_id", id)
-        .maybeSingle();
-      if (qErr) throw qErr;
-      if (!data) {
-        triggerError("Invalid Student ID. Please check your ID and try again.");
-        return;
-      }
-      const s = data as Student;
-      setStudent(s);
-      if (s.cohort_id) {
-        const { data: c } = await supabase
-          .from("cohorts")
-          .select("*")
-          .eq("id", s.cohort_id)
-          .maybeSingle();
-        setCohort((c as Cohort | null) ?? null);
-      } else {
-        setCohort(null);
-      }
-      await refreshStatus(s);
+      const res = await lookupFn({ data: { token, studentId: id } });
+      setStudent(res.student);
+      setCohort(res.cohort);
+      setStatus(res.status);
       setStep(2);
-    } catch (e) {
+    } catch (e: unknown) {
       console.error(e);
-      triggerError("Could not verify ID. Please try again.");
+      const msg = e instanceof Error ? e.message : "Could not verify ID. Please try again.";
+      triggerError(msg);
     } finally {
       setVerifying(false);
     }
@@ -139,22 +115,15 @@ export function ClockInForm() {
     }
     setBusy(true);
     try {
-      const today = todayDateStr();
-      const { error: insErr } = await supabase.from("attendance").insert({
-        student_id: student.student_id,
-        student_name: student.full_name,
-        date: today,
-        day_name: getDayName(),
-      });
-      if (insErr) throw insErr;
+      await actionFn({ data: { token, studentId: student.student_id, action: "in" } });
       setSuccess(true);
       setStatus("active");
       toast.success(`Welcome, ${student.full_name.split(" ")[0]}!`);
       setTimeout(() => setSuccess(false), 600);
       setCountdown(3);
-    } catch (e) {
+    } catch (e: unknown) {
       console.error(e);
-      toast.error("Could not clock in. Please try again.");
+      toast.error(e instanceof Error ? e.message : "Could not clock in. Please try again.");
     } finally {
       setBusy(false);
     }
@@ -164,32 +133,15 @@ export function ClockInForm() {
     if (!student) return;
     setBusy(true);
     try {
-      const today = todayDateStr();
-      const { data: openRec } = await supabase
-        .from("attendance")
-        .select("id")
-        .eq("student_id", student.student_id)
-        .eq("date", today)
-        .is("clock_out", null)
-        .order("clock_in", { ascending: false })
-        .maybeSingle();
-      if (!openRec) {
-        toast.error("No active clock-in found for today.");
-        return;
-      }
-      const { error: upErr } = await supabase
-        .from("attendance")
-        .update({ clock_out: new Date().toISOString() })
-        .eq("id", openRec.id);
-      if (upErr) throw upErr;
+      await actionFn({ data: { token, studentId: student.student_id, action: "out" } });
       setStatus("complete");
       setSuccess(true);
       toast.success(`Goodbye, ${student.full_name.split(" ")[0]}!`);
       setTimeout(() => setSuccess(false), 600);
       setCountdown(3);
-    } catch (e) {
+    } catch (e: unknown) {
       console.error(e);
-      toast.error("Could not clock out. Please try again.");
+      toast.error(e instanceof Error ? e.message : "Could not clock out. Please try again.");
     } finally {
       setBusy(false);
     }
