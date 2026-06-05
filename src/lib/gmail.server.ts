@@ -134,49 +134,51 @@ export function clockEventEmail(opts: {
   date: string;
   time: string;
   audience: "student" | "guardian";
+  subjectTemplate?: string | null;
+  bodyTemplate?: string | null;
   headerImageUrl?: string | null;
   signature?: string | null;
 }): { subject: string; html: string; text: string } {
   const verb = opts.action === "in" ? "checked in" : "checked out";
-  const subject =
-    opts.audience === "student"
-      ? `You ${verb} at ${opts.time} — ${opts.dayName}, ${opts.date}`
-      : `${opts.studentName} ${verb} at ${opts.time} — ${opts.dayName}, ${opts.date}`;
-
   const greeting = opts.recipientName ? `Hello ${opts.recipientName},` : "Hello,";
-  const intro =
-    opts.audience === "student"
-      ? `This is a confirmation that you ${verb} for the bootcamp meeting.`
-      : `This is to let you know that ${opts.studentName} ${verb} for the bootcamp meeting.`;
+  const vars: Record<string, string> = {
+    studentName: opts.studentName,
+    recipientName: opts.recipientName ?? "",
+    guardianName: opts.audience === "guardian" ? (opts.recipientName ?? "") : "",
+    dayName: opts.dayName,
+    date: opts.date,
+    time: opts.time,
+    action: opts.action === "in" ? "Clock in" : "Clock out",
+    verb,
+    greeting,
+  };
+  const render = (tpl: string) =>
+    tpl.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k) => vars[k] ?? "");
+
+  const defaults = clockEmailDefaults(opts.action, opts.audience);
+  const subject = render((opts.subjectTemplate?.trim() || defaults.subject));
+  const renderedBody = render((opts.bodyTemplate?.trim() || defaults.body));
 
   const signature = (opts.signature ?? "— Inovtech Student Attendance").trim();
   const headerImageUrl = (opts.headerImageUrl ?? "").trim();
 
-  const text = [
-    greeting,
-    "",
-    intro,
-    "",
-    `Student: ${opts.studentName}`,
-    `Action: Clock ${opts.action === "in" ? "in" : "out"}`,
-    `Day: ${opts.dayName}`,
-    `Date: ${opts.date}`,
-    `Time: ${opts.time}`,
-    "",
-    signature,
-  ].join("\n");
+  const text = [renderedBody, signature].filter(Boolean).join("\n\n");
 
   const esc = (s: string) =>
     s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const toHtmlParas = (s: string) =>
+    esc(s)
+      .split(/\n{2,}/)
+      .map((p) => `<p>${p.replace(/\n/g, "<br/>")}</p>`)
+      .join("");
 
   const badgeBg = opts.action === "in" ? "#16a34a" : "#2563eb";
   const badgeText = opts.action === "in" ? "CLOCKED IN" : "CLOCKED OUT";
 
   const html = `<div style="font-family:Arial,sans-serif;color:#111;line-height:1.5;max-width:680px">
     ${headerImageUrl ? `<div style="margin-bottom:16px"><img src="${esc(headerImageUrl)}" alt="" style="display:block;max-width:100%;height:auto;border:0;outline:none;text-decoration:none" /></div>` : ""}
-    <p>${esc(greeting)}</p>
-    <p>${esc(intro)}</p>
     <div style="display:inline-block;padding:6px 12px;border-radius:999px;background:${badgeBg};color:#fff;font-size:12px;font-weight:bold;letter-spacing:0.5px;margin:8px 0 16px">${badgeText} • ${esc(opts.time)}</div>
+    ${toHtmlParas(renderedBody)}
     <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;max-width:480px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
       <tr><td style="padding:10px 14px;background:#f9fafb;color:#6b7280;font-size:13px;width:120px">Student</td><td style="padding:10px 14px;font-size:14px">${esc(opts.studentName)}</td></tr>
       <tr><td style="padding:10px 14px;background:#f9fafb;color:#6b7280;font-size:13px">Day</td><td style="padding:10px 14px;font-size:14px">${esc(opts.dayName)}</td></tr>
@@ -187,4 +189,32 @@ export function clockEventEmail(opts: {
   </div>`;
 
   return { subject, html, text };
+}
+
+export function clockEmailDefaults(
+  action: "in" | "out",
+  audience: "student" | "guardian",
+): { subject: string; body: string } {
+  if (action === "in" && audience === "student") {
+    return {
+      subject: "You checked in at {{time}} — {{dayName}}, {{date}}",
+      body: "{{greeting}}\n\nThis confirms that you checked in for the bootcamp meeting on {{dayName}}, {{date}} at {{time}}.\n\nHave a great session!",
+    };
+  }
+  if (action === "in" && audience === "guardian") {
+    return {
+      subject: "{{studentName}} checked in at {{time}} — {{dayName}}, {{date}}",
+      body: "{{greeting}}\n\nThis is to let you know that {{studentName}} checked in for the bootcamp meeting on {{dayName}}, {{date}} at {{time}}.",
+    };
+  }
+  if (action === "out" && audience === "student") {
+    return {
+      subject: "You checked out at {{time}} — {{dayName}}, {{date}}",
+      body: "{{greeting}}\n\nThis confirms that you checked out from the bootcamp meeting on {{dayName}}, {{date}} at {{time}}.\n\nSee you next time!",
+    };
+  }
+  return {
+    subject: "{{studentName}} checked out at {{time}} — {{dayName}}, {{date}}",
+    body: "{{greeting}}\n\nThis is to let you know that {{studentName}} checked out from the bootcamp meeting on {{dayName}}, {{date}} at {{time}}.",
+  };
 }
