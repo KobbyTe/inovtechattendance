@@ -30,8 +30,20 @@ function AdminPage() {
         return;
       }
       // Bootstrap: first signed-in user becomes admin if none exists.
-      await supabase.rpc("claim_admin_if_none");
-      const { data: roles } = await supabase
+      // user_roles / claim_admin_if_none are added by a recent migration; types may lag.
+      const sb = supabase as unknown as {
+        rpc: (fn: string) => Promise<unknown>;
+        from: (t: string) => {
+          select: (c: string) => {
+            eq: (
+              col: string,
+              val: string,
+            ) => Promise<{ data: Array<{ role: string }> | null }>;
+          };
+        };
+      };
+      await sb.rpc("claim_admin_if_none");
+      const { data: roles } = await sb
         .from("user_roles")
         .select("role")
         .eq("user_id", data.user.id);
