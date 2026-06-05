@@ -54,7 +54,16 @@ export function SettingsTab() {
   const [emailBody, setEmailBody] = useState(DEFAULT_BODY);
   const [emailHeaderImageUrl, setEmailHeaderImageUrl] = useState<string>("");
   const [emailSignature, setEmailSignature] = useState(DEFAULT_SIGNATURE);
-  const [clockTpl, setClockTpl] = useState({
+  const [clockTpl, setClockTpl] = useState<{
+    clockin_student_subject: string;
+    clockin_student_body: string;
+    clockin_guardian_subject: string;
+    clockin_guardian_body: string;
+    clockout_student_subject: string;
+    clockout_student_body: string;
+    clockout_guardian_subject: string;
+    clockout_guardian_body: string;
+  }>({
     clockin_student_subject: CLOCK_DEFAULTS.clockin_student.subject,
     clockin_student_body: CLOCK_DEFAULTS.clockin_student.body,
     clockin_guardian_subject: CLOCK_DEFAULTS.clockin_guardian.subject,
