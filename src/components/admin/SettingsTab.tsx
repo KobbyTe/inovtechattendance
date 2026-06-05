@@ -31,18 +31,59 @@ export function SettingsTab() {
     "{{greeting}}\n\nThis is to notify you that {{studentName}} was not marked present at the bootcamp meeting on {{dayName}}, {{date}}.\n\nIf this is unexpected, please contact the program team.";
   const DEFAULT_SIGNATURE = "— Inovtech Student Attendance";
 
+  const CLOCK_DEFAULTS = {
+    clockin_student: {
+      subject: "You checked in at {{time}} — {{dayName}}, {{date}}",
+      body: "{{greeting}}\n\nThis confirms that you checked in for the bootcamp meeting on {{dayName}}, {{date}} at {{time}}.\n\nHave a great session!",
+    },
+    clockin_guardian: {
+      subject: "{{studentName}} checked in at {{time}} — {{dayName}}, {{date}}",
+      body: "{{greeting}}\n\nThis is to let you know that {{studentName}} checked in for the bootcamp meeting on {{dayName}}, {{date}} at {{time}}.",
+    },
+    clockout_student: {
+      subject: "You checked out at {{time}} — {{dayName}}, {{date}}",
+      body: "{{greeting}}\n\nThis confirms that you checked out from the bootcamp meeting on {{dayName}}, {{date}} at {{time}}.\n\nSee you next time!",
+    },
+    clockout_guardian: {
+      subject: "{{studentName}} checked out at {{time}} — {{dayName}}, {{date}}",
+      body: "{{greeting}}\n\nThis is to let you know that {{studentName}} checked out from the bootcamp meeting on {{dayName}}, {{date}} at {{time}}.",
+    },
+  } as const;
+
   const [emailSubject, setEmailSubject] = useState(DEFAULT_SUBJECT);
   const [emailBody, setEmailBody] = useState(DEFAULT_BODY);
   const [emailHeaderImageUrl, setEmailHeaderImageUrl] = useState<string>("");
   const [emailSignature, setEmailSignature] = useState(DEFAULT_SIGNATURE);
+  const [clockTpl, setClockTpl] = useState<{
+    clockin_student_subject: string;
+    clockin_student_body: string;
+    clockin_guardian_subject: string;
+    clockin_guardian_body: string;
+    clockout_student_subject: string;
+    clockout_student_body: string;
+    clockout_guardian_subject: string;
+    clockout_guardian_body: string;
+  }>({
+    clockin_student_subject: CLOCK_DEFAULTS.clockin_student.subject,
+    clockin_student_body: CLOCK_DEFAULTS.clockin_student.body,
+    clockin_guardian_subject: CLOCK_DEFAULTS.clockin_guardian.subject,
+    clockin_guardian_body: CLOCK_DEFAULTS.clockin_guardian.body,
+    clockout_student_subject: CLOCK_DEFAULTS.clockout_student.subject,
+    clockout_student_body: CLOCK_DEFAULTS.clockout_student.body,
+    clockout_guardian_subject: CLOCK_DEFAULTS.clockout_guardian.subject,
+    clockout_guardian_body: CLOCK_DEFAULTS.clockout_guardian.body,
+  });
   const [savingTpl, setSavingTpl] = useState(false);
+  const [savingClock, setSavingClock] = useState(false);
   const [uploadingHeader, setUploadingHeader] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     supabase
       .from("app_settings")
-      .select("google_sheet_id,last_sheets_sync_at,email_subject,email_body,email_header_image_url,email_signature")
+      .select(
+        "google_sheet_id,last_sheets_sync_at,email_subject,email_body,email_header_image_url,email_signature,clockin_student_subject,clockin_student_body,clockin_guardian_subject,clockin_guardian_body,clockout_student_subject,clockout_student_body,clockout_guardian_subject,clockout_guardian_body",
+      )
       .eq("singleton", true)
       .maybeSingle()
       .then(({ data }) => {
@@ -55,6 +96,18 @@ export function SettingsTab() {
         if (data?.email_body) setEmailBody(data.email_body);
         if (data?.email_header_image_url) setEmailHeaderImageUrl(data.email_header_image_url);
         if (data?.email_signature) setEmailSignature(data.email_signature);
+        if (data) {
+          setClockTpl((prev) => ({
+            clockin_student_subject: data.clockin_student_subject ?? prev.clockin_student_subject,
+            clockin_student_body: data.clockin_student_body ?? prev.clockin_student_body,
+            clockin_guardian_subject: data.clockin_guardian_subject ?? prev.clockin_guardian_subject,
+            clockin_guardian_body: data.clockin_guardian_body ?? prev.clockin_guardian_body,
+            clockout_student_subject: data.clockout_student_subject ?? prev.clockout_student_subject,
+            clockout_student_body: data.clockout_student_body ?? prev.clockout_student_body,
+            clockout_guardian_subject: data.clockout_guardian_subject ?? prev.clockout_guardian_subject,
+            clockout_guardian_body: data.clockout_guardian_body ?? prev.clockout_guardian_body,
+          }));
+        }
       });
   }, []);
 
@@ -114,6 +167,39 @@ export function SettingsTab() {
     setEmailSubject(DEFAULT_SUBJECT);
     setEmailBody(DEFAULT_BODY);
     setEmailSignature(DEFAULT_SIGNATURE);
+  }
+
+  async function saveClockTemplates() {
+    setSavingClock(true);
+    const { data: existing } = await supabase
+      .from("app_settings")
+      .select("id")
+      .eq("singleton", true)
+      .maybeSingle();
+    const payload = {
+      singleton: true,
+      ...clockTpl,
+      updated_at: new Date().toISOString(),
+    };
+    const { error } = existing
+      ? await supabase.from("app_settings").update(payload).eq("id", existing.id)
+      : await supabase.from("app_settings").insert(payload);
+    setSavingClock(false);
+    if (error) return toast.error(error.message);
+    toast.success("Check-in / check-out templates saved");
+  }
+
+  function resetClockTemplates() {
+    setClockTpl({
+      clockin_student_subject: CLOCK_DEFAULTS.clockin_student.subject,
+      clockin_student_body: CLOCK_DEFAULTS.clockin_student.body,
+      clockin_guardian_subject: CLOCK_DEFAULTS.clockin_guardian.subject,
+      clockin_guardian_body: CLOCK_DEFAULTS.clockin_guardian.body,
+      clockout_student_subject: CLOCK_DEFAULTS.clockout_student.subject,
+      clockout_student_body: CLOCK_DEFAULTS.clockout_student.body,
+      clockout_guardian_subject: CLOCK_DEFAULTS.clockout_guardian.subject,
+      clockout_guardian_body: CLOCK_DEFAULTS.clockout_guardian.body,
+    });
   }
 
   async function handleHeaderFile(file: File) {
@@ -256,6 +342,61 @@ export function SettingsTab() {
             </Button>
             <Button variant="outline" onClick={resetTemplate} className="h-11">
               Reset to default
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-xl bg-card border border-border p-5">
+        <div className="flex items-center gap-2">
+          <Mail className="h-5 w-5 text-primary" />
+          <h3 className="text-base font-semibold">Check-in / check-out emails</h3>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1">
+          Customize the confirmation emails sent to the student and the guardian when a student clocks in or clocks out. The header image and signature above are reused.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-1.5 text-xs">
+          {["{{studentName}}", "{{recipientName}}", "{{guardianName}}", "{{dayName}}", "{{date}}", "{{time}}", "{{action}}", "{{verb}}", "{{greeting}}"].map((t) => (
+            <code key={t} className="rounded bg-muted px-1.5 py-0.5 font-mono">{t}</code>
+          ))}
+        </div>
+        <div className="space-y-6 mt-4">
+          {[
+            { key: "clockin_student", title: "Clock-in — to student" },
+            { key: "clockin_guardian", title: "Clock-in — to guardian" },
+            { key: "clockout_student", title: "Clock-out — to student" },
+            { key: "clockout_guardian", title: "Clock-out — to guardian" },
+          ].map((g) => {
+            const subjKey = `${g.key}_subject` as keyof typeof clockTpl;
+            const bodyKey = `${g.key}_body` as keyof typeof clockTpl;
+            return (
+              <div key={g.key} className="space-y-3 rounded-lg border border-border p-4">
+                <h4 className="text-sm font-semibold">{g.title}</h4>
+                <div className="space-y-2">
+                  <Label>Subject</Label>
+                  <Input
+                    value={clockTpl[subjKey]}
+                    onChange={(e) => setClockTpl((p) => ({ ...p, [subjKey]: e.target.value }))}
+                    className="h-11"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Message</Label>
+                  <Textarea
+                    value={clockTpl[bodyKey]}
+                    onChange={(e) => setClockTpl((p) => ({ ...p, [bodyKey]: e.target.value }))}
+                    rows={6}
+                  />
+                </div>
+              </div>
+            );
+          })}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button onClick={saveClockTemplates} disabled={savingClock} className="h-11">
+              {savingClock ? "Saving…" : "Save templates"}
+            </Button>
+            <Button variant="outline" onClick={resetClockTemplates} className="h-11">
+              Reset to defaults
             </Button>
           </div>
         </div>

@@ -16,7 +16,9 @@ async function sendClockNotifications(params: {
   try {
     const { data: settings } = await supabaseAdmin
       .from("app_settings")
-      .select("email_header_image_url,email_signature")
+      .select(
+        "email_header_image_url,email_signature,clockin_student_subject,clockin_student_body,clockin_guardian_subject,clockin_guardian_body,clockout_student_subject,clockout_student_body,clockout_guardian_subject,clockout_guardian_body",
+      )
       .eq("singleton", true)
       .maybeSingle();
 
@@ -30,12 +32,33 @@ async function sendClockNotifications(params: {
       signature: settings?.email_signature ?? null,
     };
 
+    const tpl = {
+      studentSubject:
+        params.action === "in"
+          ? settings?.clockin_student_subject
+          : settings?.clockout_student_subject,
+      studentBody:
+        params.action === "in"
+          ? settings?.clockin_student_body
+          : settings?.clockout_student_body,
+      guardianSubject:
+        params.action === "in"
+          ? settings?.clockin_guardian_subject
+          : settings?.clockout_guardian_subject,
+      guardianBody:
+        params.action === "in"
+          ? settings?.clockin_guardian_body
+          : settings?.clockout_guardian_body,
+    };
+
     const sends: Promise<unknown>[] = [];
     if (params.studentEmail) {
       const msg = clockEventEmail({
         ...common,
         audience: "student",
         recipientName: params.studentName,
+        subjectTemplate: tpl.studentSubject ?? null,
+        bodyTemplate: tpl.studentBody ?? null,
       });
       sends.push(sendGmail({ to: params.studentEmail, ...msg }));
     }
@@ -44,6 +67,8 @@ async function sendClockNotifications(params: {
         ...common,
         audience: "guardian",
         recipientName: params.guardianName,
+        subjectTemplate: tpl.guardianSubject ?? null,
+        bodyTemplate: tpl.guardianBody ?? null,
       });
       sends.push(sendGmail({ to: params.guardianEmail, ...msg }));
     }
