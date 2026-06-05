@@ -51,6 +51,14 @@ export type Database = {
       }
       app_settings: {
         Row: {
+          clockin_guardian_body: string | null
+          clockin_guardian_subject: string | null
+          clockin_student_body: string | null
+          clockin_student_subject: string | null
+          clockout_guardian_body: string | null
+          clockout_guardian_subject: string | null
+          clockout_student_body: string | null
+          clockout_student_subject: string | null
           email_body: string | null
           email_header: string | null
           email_header_image_url: string | null
@@ -63,6 +71,14 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          clockin_guardian_body?: string | null
+          clockin_guardian_subject?: string | null
+          clockin_student_body?: string | null
+          clockin_student_subject?: string | null
+          clockout_guardian_body?: string | null
+          clockout_guardian_subject?: string | null
+          clockout_student_body?: string | null
+          clockout_student_subject?: string | null
           email_body?: string | null
           email_header?: string | null
           email_header_image_url?: string | null
@@ -75,6 +91,14 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          clockin_guardian_body?: string | null
+          clockin_guardian_subject?: string | null
+          clockin_student_body?: string | null
+          clockin_student_subject?: string | null
+          clockout_guardian_body?: string | null
+          clockout_guardian_subject?: string | null
+          clockout_student_body?: string | null
+          clockout_student_subject?: string | null
           email_body?: string | null
           email_header?: string | null
           email_header_image_url?: string | null
