@@ -123,7 +123,7 @@ function Index() {
               </Link>
             </div>
           )}
-          {state.kind === "ok" && <ClockInForm />}
+          {state.kind === "ok" && t && <ClockInForm token={t} />}
         </section>
       </main>
 
