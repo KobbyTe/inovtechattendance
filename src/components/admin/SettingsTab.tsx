@@ -31,18 +31,50 @@ export function SettingsTab() {
     "{{greeting}}\n\nThis is to notify you that {{studentName}} was not marked present at the bootcamp meeting on {{dayName}}, {{date}}.\n\nIf this is unexpected, please contact the program team.";
   const DEFAULT_SIGNATURE = "— Inovtech Student Attendance";
 
+  const CLOCK_DEFAULTS = {
+    clockin_student: {
+      subject: "You checked in at {{time}} — {{dayName}}, {{date}}",
+      body: "{{greeting}}\n\nThis confirms that you checked in for the bootcamp meeting on {{dayName}}, {{date}} at {{time}}.\n\nHave a great session!",
+    },
+    clockin_guardian: {
+      subject: "{{studentName}} checked in at {{time}} — {{dayName}}, {{date}}",
+      body: "{{greeting}}\n\nThis is to let you know that {{studentName}} checked in for the bootcamp meeting on {{dayName}}, {{date}} at {{time}}.",
+    },
+    clockout_student: {
+      subject: "You checked out at {{time}} — {{dayName}}, {{date}}",
+      body: "{{greeting}}\n\nThis confirms that you checked out from the bootcamp meeting on {{dayName}}, {{date}} at {{time}}.\n\nSee you next time!",
+    },
+    clockout_guardian: {
+      subject: "{{studentName}} checked out at {{time}} — {{dayName}}, {{date}}",
+      body: "{{greeting}}\n\nThis is to let you know that {{studentName}} checked out from the bootcamp meeting on {{dayName}}, {{date}} at {{time}}.",
+    },
+  } as const;
+
   const [emailSubject, setEmailSubject] = useState(DEFAULT_SUBJECT);
   const [emailBody, setEmailBody] = useState(DEFAULT_BODY);
   const [emailHeaderImageUrl, setEmailHeaderImageUrl] = useState<string>("");
   const [emailSignature, setEmailSignature] = useState(DEFAULT_SIGNATURE);
+  const [clockTpl, setClockTpl] = useState({
+    clockin_student_subject: CLOCK_DEFAULTS.clockin_student.subject,
+    clockin_student_body: CLOCK_DEFAULTS.clockin_student.body,
+    clockin_guardian_subject: CLOCK_DEFAULTS.clockin_guardian.subject,
+    clockin_guardian_body: CLOCK_DEFAULTS.clockin_guardian.body,
+    clockout_student_subject: CLOCK_DEFAULTS.clockout_student.subject,
+    clockout_student_body: CLOCK_DEFAULTS.clockout_student.body,
+    clockout_guardian_subject: CLOCK_DEFAULTS.clockout_guardian.subject,
+    clockout_guardian_body: CLOCK_DEFAULTS.clockout_guardian.body,
+  });
   const [savingTpl, setSavingTpl] = useState(false);
+  const [savingClock, setSavingClock] = useState(false);
   const [uploadingHeader, setUploadingHeader] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     supabase
       .from("app_settings")
-      .select("google_sheet_id,last_sheets_sync_at,email_subject,email_body,email_header_image_url,email_signature")
+      .select(
+        "google_sheet_id,last_sheets_sync_at,email_subject,email_body,email_header_image_url,email_signature,clockin_student_subject,clockin_student_body,clockin_guardian_subject,clockin_guardian_body,clockout_student_subject,clockout_student_body,clockout_guardian_subject,clockout_guardian_body",
+      )
       .eq("singleton", true)
       .maybeSingle()
       .then(({ data }) => {
@@ -55,6 +87,18 @@ export function SettingsTab() {
         if (data?.email_body) setEmailBody(data.email_body);
         if (data?.email_header_image_url) setEmailHeaderImageUrl(data.email_header_image_url);
         if (data?.email_signature) setEmailSignature(data.email_signature);
+        if (data) {
+          setClockTpl((prev) => ({
+            clockin_student_subject: data.clockin_student_subject ?? prev.clockin_student_subject,
+            clockin_student_body: data.clockin_student_body ?? prev.clockin_student_body,
+            clockin_guardian_subject: data.clockin_guardian_subject ?? prev.clockin_guardian_subject,
+            clockin_guardian_body: data.clockin_guardian_body ?? prev.clockin_guardian_body,
+            clockout_student_subject: data.clockout_student_subject ?? prev.clockout_student_subject,
+            clockout_student_body: data.clockout_student_body ?? prev.clockout_student_body,
+            clockout_guardian_subject: data.clockout_guardian_subject ?? prev.clockout_guardian_subject,
+            clockout_guardian_body: data.clockout_guardian_body ?? prev.clockout_guardian_body,
+          }));
+        }
       });
   }, []);
 
@@ -114,6 +158,39 @@ export function SettingsTab() {
     setEmailSubject(DEFAULT_SUBJECT);
     setEmailBody(DEFAULT_BODY);
     setEmailSignature(DEFAULT_SIGNATURE);
+  }
+
+  async function saveClockTemplates() {
+    setSavingClock(true);
+    const { data: existing } = await supabase
+      .from("app_settings")
+      .select("id")
+      .eq("singleton", true)
+      .maybeSingle();
+    const payload = {
+      singleton: true,
+      ...clockTpl,
+      updated_at: new Date().toISOString(),
+    };
+    const { error } = existing
+      ? await supabase.from("app_settings").update(payload).eq("id", existing.id)
+      : await supabase.from("app_settings").insert(payload);
+    setSavingClock(false);
+    if (error) return toast.error(error.message);
+    toast.success("Check-in / check-out templates saved");
+  }
+
+  function resetClockTemplates() {
+    setClockTpl({
+      clockin_student_subject: CLOCK_DEFAULTS.clockin_student.subject,
+      clockin_student_body: CLOCK_DEFAULTS.clockin_student.body,
+      clockin_guardian_subject: CLOCK_DEFAULTS.clockin_guardian.subject,
+      clockin_guardian_body: CLOCK_DEFAULTS.clockin_guardian.body,
+      clockout_student_subject: CLOCK_DEFAULTS.clockout_student.subject,
+      clockout_student_body: CLOCK_DEFAULTS.clockout_student.body,
+      clockout_guardian_subject: CLOCK_DEFAULTS.clockout_guardian.subject,
+      clockout_guardian_body: CLOCK_DEFAULTS.clockout_guardian.body,
+    });
   }
 
   async function handleHeaderFile(file: File) {
