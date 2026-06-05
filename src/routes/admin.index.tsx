@@ -23,10 +23,26 @@ function AdminPage() {
   const [tab, setTab] = useState<AdminTab>("dashboard");
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) navigate({ to: "/admin/login", replace: true });
-      else setReady(true);
-    });
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) {
+        navigate({ to: "/admin/login", replace: true });
+        return;
+      }
+      // Bootstrap: first signed-in user becomes admin if none exists.
+      await supabase.rpc("claim_admin_if_none");
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.user.id);
+      const isAdmin = (roles ?? []).some((r) => r.role === "admin");
+      if (!isAdmin) {
+        await supabase.auth.signOut();
+        navigate({ to: "/admin/login", replace: true });
+        return;
+      }
+      setReady(true);
+    })();
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       if (!session) navigate({ to: "/admin/login", replace: true });
     });
