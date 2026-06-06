@@ -8,19 +8,29 @@ import {
   LogOut,
   QrCode,
   Settings,
+  Star,
   Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
-export type AdminTab = "dashboard" | "roster" | "cohorts" | "records" | "absences" | "qr" | "settings";
+export type AdminTab =
+  | "dashboard"
+  | "roster"
+  | "cohorts"
+  | "records"
+  | "reviews"
+  | "absences"
+  | "qr"
+  | "settings";
 
 const TABS: { id: AdminTab; label: string; icon: typeof BarChart2 }[] = [
   { id: "dashboard", label: "Dashboard", icon: BarChart2 },
   { id: "roster", label: "Roster", icon: Users },
   { id: "cohorts", label: "Cohorts", icon: Layers },
   { id: "records", label: "Records", icon: Calendar },
+  { id: "reviews", label: "Reviews", icon: Star },
   { id: "absences", label: "Absences", icon: CalendarX },
   { id: "qr", label: "QR Code", icon: QrCode },
   { id: "settings", label: "Settings", icon: Settings },
@@ -103,7 +113,7 @@ export function AdminShell({
         </main>
 
         {/* Mobile bottom tab bar */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border grid grid-cols-7 z-50">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border grid grid-cols-8 z-50">
           {TABS.map((t) => (
             <button
               key={t.id}
