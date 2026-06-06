@@ -11,6 +11,7 @@ import {
   initials,
   isMeetingDay,
 } from "@/lib/attendance";
+import { SessionReview } from "@/components/SessionReview";
 
 type Status = "none" | "active" | "complete";
 type StudentLite = {
@@ -34,6 +35,8 @@ export function ClockInForm({ token }: { token: string }) {
   const [busy, setBusy] = useState(false);
   const [success, setSuccess] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [reviewAttendanceId, setReviewAttendanceId] = useState<string | null>(null);
+  const [showReview, setShowReview] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const inputRef = useRef<HTMLInputElement>(null);
   const meetingDay = isMeetingDay(now);
@@ -133,12 +136,13 @@ export function ClockInForm({ token }: { token: string }) {
     if (!student) return;
     setBusy(true);
     try {
-      await actionFn({ data: { token, studentId: student.student_id, action: "out" } });
+      const res = await actionFn({ data: { token, studentId: student.student_id, action: "out" } });
       setStatus("complete");
       setSuccess(true);
       toast.success(`Goodbye, ${student.full_name.split(" ")[0]}!`);
       setTimeout(() => setSuccess(false), 600);
-      setCountdown(3);
+      setReviewAttendanceId(("attendanceId" in res ? res.attendanceId : null) ?? null);
+      setTimeout(() => setShowReview(true), 700);
     } catch (e: unknown) {
       console.error(e);
       toast.error(e instanceof Error ? e.message : "Could not clock out. Please try again.");
@@ -375,6 +379,21 @@ export function ClockInForm({ token }: { token: string }) {
               </p>
             )}
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showReview && student && (
+          <SessionReview
+            token={token}
+            studentId={student.student_id}
+            studentName={student.full_name}
+            attendanceId={reviewAttendanceId}
+            onClose={() => {
+              setShowReview(false);
+              goBack();
+            }}
+          />
         )}
       </AnimatePresence>
     </>
