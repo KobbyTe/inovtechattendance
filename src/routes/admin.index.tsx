@@ -9,6 +9,7 @@ import { QRCodePanel } from "@/components/admin/QRCodePanel";
 import { SettingsTab } from "@/components/admin/SettingsTab";
 import { CohortsTab } from "@/components/admin/CohortsTab";
 import { AbsencesTab } from "@/components/admin/AbsencesTab";
+import { ReviewsTab } from "@/components/admin/ReviewsTab";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
@@ -75,6 +76,7 @@ function AdminPage() {
       {tab === "roster" && <RosterTab />}
       {tab === "cohorts" && <CohortsTab />}
       {tab === "records" && <RecordsTab />}
+      {tab === "reviews" && <ReviewsTab />}
       {tab === "absences" && <AbsencesTab />}
       {tab === "qr" && <QRCodePanel />}
       {tab === "settings" && <SettingsTab />}

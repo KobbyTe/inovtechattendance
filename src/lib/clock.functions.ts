@@ -208,5 +208,49 @@ export const clockAction = createServerFn({ method: "POST" })
       action: "out",
       now,
     });
-    return { status: "complete" as const };
+    return { status: "complete" as const, attendanceId: open.id };
+  });
+
+export const submitSessionReview = createServerFn({ method: "POST" })
+  .inputValidator((i) =>
+    z
+      .object({
+        token: tokenSchema,
+        studentId: studentIdSchema,
+        attendanceId: z.string().uuid().nullable().optional(),
+        classRating: z.number().int().min(1).max(5),
+        enjoyment: z.boolean().nullable().optional(),
+        achievements: z.string().max(300).nullable().optional(),
+        classFeedback: z.string().max(300).nullable().optional(),
+        teacherNote: z.string().max(400).nullable().optional(),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data }) => {
+    const t = verifyQrToken(data.token);
+    if (!t.valid) throw new Error(t.reason || "Invalid QR code");
+
+    const { data: s, error: sErr } = await supabaseAdmin
+      .from("students")
+      .select("student_id, full_name, cohort_id")
+      .ilike("student_id", data.studentId)
+      .maybeSingle();
+    if (sErr) throw new Error(sErr.message);
+    if (!s) throw new Error("Invalid Student ID");
+
+    const today = format(new Date(), "yyyy-MM-dd");
+    const { error } = await supabaseAdmin.from("session_reviews").insert({
+      attendance_id: data.attendanceId ?? null,
+      student_id: s.student_id,
+      student_name: s.full_name,
+      cohort_id: s.cohort_id,
+      date: today,
+      class_rating: data.classRating,
+      enjoyment: data.enjoyment ?? null,
+      achievements: data.achievements?.trim() || null,
+      class_feedback: data.classFeedback?.trim() || null,
+      teacher_note: data.teacherNote?.trim() || null,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
   });

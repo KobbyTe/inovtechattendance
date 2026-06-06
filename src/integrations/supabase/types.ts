@@ -189,6 +189,66 @@ export type Database = {
         }
         Relationships: []
       }
+      session_reviews: {
+        Row: {
+          achievements: string | null
+          attendance_id: string | null
+          class_feedback: string | null
+          class_rating: number
+          cohort_id: string | null
+          date: string
+          enjoyment: boolean | null
+          id: string
+          student_id: string
+          student_name: string
+          submitted_at: string
+          teacher_note: string | null
+        }
+        Insert: {
+          achievements?: string | null
+          attendance_id?: string | null
+          class_feedback?: string | null
+          class_rating: number
+          cohort_id?: string | null
+          date: string
+          enjoyment?: boolean | null
+          id?: string
+          student_id: string
+          student_name: string
+          submitted_at?: string
+          teacher_note?: string | null
+        }
+        Update: {
+          achievements?: string | null
+          attendance_id?: string | null
+          class_feedback?: string | null
+          class_rating?: number
+          cohort_id?: string | null
+          date?: string
+          enjoyment?: boolean | null
+          id?: string
+          student_id?: string
+          student_name?: string
+          submitted_at?: string
+          teacher_note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_reviews_attendance_id_fkey"
+            columns: ["attendance_id"]
+            isOneToOne: false
+            referencedRelation: "attendance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_reviews_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           cohort_id: string | null
