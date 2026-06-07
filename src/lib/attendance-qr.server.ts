@@ -1,6 +1,5 @@
-import process from "node:process";
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { MEETING_DAYS } from "@/lib/attendance";
+import process from "node:process";
 import { format } from "date-fns";
 
 function getKey(): string {
@@ -55,10 +54,6 @@ export function verifyQrToken(token: string): {
   const today = format(new Date(), "yyyy-MM-dd");
   if (date !== today) {
     return { valid: false, reason: "This QR code has expired. Ask the admin for today's code.", date };
-  }
-  const dayName = format(new Date(), "EEEE");
-  if (!MEETING_DAYS.includes(dayName)) {
-    return { valid: false, reason: "Today is not a meeting day.", date };
   }
   return { valid: true, date };
 }

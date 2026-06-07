@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Trash2 } from "lucide-react";
+import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { generateStudentId, previewStudentId } from "@/lib/cohorts";
 
@@ -45,6 +45,16 @@ export function RosterTab() {
     student_email: "",
   });
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState<Student | null>(null);
+  const [editForm, setEditForm] = useState({
+    full_name: "",
+    year_level: "Year 1",
+    cohort_id: "",
+    guardian_name: "",
+    guardian_email: "",
+    student_email: "",
+  });
+  const [savingEdit, setSavingEdit] = useState(false);
 
   async function load() {
     const [{ data: ss }, { data: att }, { data: cs }] = await Promise.all([
@@ -111,6 +121,40 @@ export function RosterTab() {
     const { error } = await supabase.from("students").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Student removed");
+    load();
+  }
+
+  function openEdit(s: Student) {
+    setEditing(s);
+    setEditForm({
+      full_name: s.full_name,
+      year_level: s.year_level,
+      cohort_id: s.cohort_id ?? "",
+      guardian_name: s.guardian_name ?? "",
+      guardian_email: s.guardian_email ?? "",
+      student_email: s.student_email ?? "",
+    });
+  }
+
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editing) return;
+    setSavingEdit(true);
+    const { error } = await supabase
+      .from("students")
+      .update({
+        full_name: editForm.full_name,
+        year_level: editForm.year_level,
+        cohort_id: editForm.cohort_id || null,
+        guardian_name: editForm.guardian_name || null,
+        guardian_email: editForm.guardian_email || null,
+        student_email: editForm.student_email || null,
+      })
+      .eq("id", editing.id);
+    setSavingEdit(false);
+    if (error) return toast.error(error.message);
+    toast.success("Student updated");
+    setEditing(null);
     load();
   }
 
@@ -268,6 +312,9 @@ export function RosterTab() {
                   <td className="px-4 py-2">{s.year_level}</td>
                   <td className="px-4 py-2">{counts[s.student_id] ?? 0}</td>
                   <td className="px-4 py-2 text-right">
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(s)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                     <DeleteBtn onConfirm={() => remove(s.id)} name={s.full_name} />
                   </td>
                 </tr>
@@ -290,6 +337,9 @@ export function RosterTab() {
                     {s.student_id} · {s.year_level} · {counts[s.student_id] ?? 0} sessions
                   </p>
                 </div>
+                <Button variant="ghost" size="icon" onClick={() => openEdit(s)}>
+                  <Pencil className="h-4 w-4" />
+                </Button>
                 <DeleteBtn onConfirm={() => remove(s.id)} name={s.full_name} />
               </li>
             );
@@ -301,6 +351,86 @@ export function RosterTab() {
           </div>
         )}
       </div>
+
+      <Sheet open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Edit student</SheetTitle>
+          </SheetHeader>
+          {editing && (
+            <form onSubmit={saveEdit} className="space-y-4 mt-6">
+              <div className="rounded-md bg-muted px-3 py-2">
+                <p className="text-xs text-muted-foreground">Student ID</p>
+                <p className="font-mono font-semibold text-sm">{editing.student_id}</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Full name</Label>
+                <Input
+                  required
+                  value={editForm.full_name}
+                  onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Cohort</Label>
+                <Select
+                  value={editForm.cohort_id}
+                  onValueChange={(v) => setEditForm({ ...editForm, cohort_id: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose cohort" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cohorts.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Year level</Label>
+                <Select
+                  value={editForm.year_level}
+                  onValueChange={(v) => setEditForm({ ...editForm, year_level: v })}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {YEARS.map((y) => (
+                      <SelectItem key={y} value={y}>{y}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Guardian / Parent name</Label>
+                <Input
+                  value={editForm.guardian_name}
+                  onChange={(e) => setEditForm({ ...editForm, guardian_name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Guardian / Parent email</Label>
+                <Input
+                  type="email"
+                  value={editForm.guardian_email}
+                  onChange={(e) => setEditForm({ ...editForm, guardian_email: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Student email</Label>
+                <Input
+                  type="email"
+                  value={editForm.student_email}
+                  onChange={(e) => setEditForm({ ...editForm, student_email: e.target.value })}
+                />
+              </div>
+              <Button type="submit" disabled={savingEdit} className="w-full h-11">
+                {savingEdit ? "Saving…" : "Save changes"}
+              </Button>
+            </form>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
