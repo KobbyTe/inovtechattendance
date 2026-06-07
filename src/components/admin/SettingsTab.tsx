@@ -212,9 +212,9 @@ export function SettingsTab() {
     });
     URL.revokeObjectURL(url);
     if (!dims) return toast.error("Could not read image");
-    if (dims.w < 600 || dims.w > 700 || dims.h < 70 || dims.h > 200) {
+    if (dims.w < 600 || dims.w > 1600 || dims.h < 70 || dims.h > 500) {
       return toast.error(
-        `Image must be 600–700 px wide and 70–200 px tall. Yours is ${dims.w}×${dims.h}.`,
+        `Image must be 600–1600 px wide and 70–500 px tall. Yours is ${dims.w}×${dims.h}.`,
       );
     }
     setUploadingHeader(true);
@@ -257,7 +257,7 @@ export function SettingsTab() {
           <div className="space-y-2">
             <Label>Header image (optional)</Label>
             <p className="text-xs text-muted-foreground">
-              Upload a banner image. Required size: 600–700 px wide, 70–200 px tall.
+              Upload a banner image. Recommended size: 600–1600 px wide, 70–500 px tall.
             </p>
             {emailHeaderImageUrl ? (
               <div className="rounded-lg border border-border p-3 space-y-2 bg-muted/30">

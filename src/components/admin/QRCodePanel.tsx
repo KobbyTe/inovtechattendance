@@ -30,9 +30,7 @@ export function QRCodePanel() {
   }
 
   useEffect(() => {
-    if (isMeetingDay()) {
-      void generate();
-    }
+    void generate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -53,7 +51,7 @@ export function QRCodePanel() {
   return (
     <div className="space-y-4 max-w-md mx-auto">
       <div className="rounded-lg bg-accent/60 border border-accent p-4 text-sm text-foreground">
-        A new QR code is generated for each meeting day ({MEETING_DAYS.join(", ")}).
+        A new QR code is generated daily — including non-meeting days ({MEETING_DAYS.join(", ")}) so you can test the flow anytime.
         Yesterday's code stops working automatically.
       </div>
 
@@ -70,9 +68,7 @@ export function QRCodePanel() {
             />
           ) : (
             <div className="h-64 w-64 flex items-center justify-center text-sm text-muted-foreground text-center px-4">
-              {isMeetingDay()
-                ? "Generating today's QR…"
-                : "Today is not a meeting day. You can still generate a code for testing."}
+              Generating today's QR…
             </div>
           )}
         </div>
