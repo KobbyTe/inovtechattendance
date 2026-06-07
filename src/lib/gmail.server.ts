@@ -10,6 +10,23 @@ function b64url(input: string): string {
     .replace(/=+$/, "");
 }
 
+function b64(input: string | Buffer): string {
+  const buf = typeof input === "string" ? Buffer.from(input, "utf8") : input;
+  return buf.toString("base64");
+}
+
+// RFC 2047 encoded-word for headers containing non-ASCII characters.
+function encodeHeader(value: string): string {
+  // eslint-disable-next-line no-control-regex
+  if (/^[\x00-\x7F]*$/.test(value)) return value;
+  return `=?UTF-8?B?${b64(value)}?=`;
+}
+
+// Split base64 into 76-char lines per RFC 2045.
+function chunk76(s: string): string {
+  return s.replace(/(.{76})/g, "$1\r\n");
+}
+
 function buildRaw(opts: {
   to: string;
   subject: string;
@@ -18,30 +35,28 @@ function buildRaw(opts: {
   fromName?: string;
 }): string {
   const boundary = `b_${Date.now().toString(36)}`;
-  const fromHeader = opts.fromName ? `From: ${opts.fromName}\r\n` : "";
-  const mime = [
-    `To: ${opts.to}`,
-    `Subject: ${opts.subject}`,
-    `MIME-Version: 1.0`,
-    `Content-Type: multipart/alternative; boundary="${boundary}"`,
-    fromHeader.trim(),
-    "",
+  const headers: string[] = [`To: ${opts.to}`, `Subject: ${encodeHeader(opts.subject)}`];
+  if (opts.fromName) headers.push(`From: ${encodeHeader(opts.fromName)}`);
+  headers.push("MIME-Version: 1.0");
+  headers.push(`Content-Type: multipart/alternative; boundary="${boundary}"`);
+
+  const textPart = [
     `--${boundary}`,
     `Content-Type: text/plain; charset="UTF-8"`,
-    `Content-Transfer-Encoding: 7bit`,
+    `Content-Transfer-Encoding: base64`,
     "",
-    opts.text,
-    "",
+    chunk76(b64(opts.text)),
+  ].join("\r\n");
+
+  const htmlPart = [
     `--${boundary}`,
     `Content-Type: text/html; charset="UTF-8"`,
-    `Content-Transfer-Encoding: 7bit`,
+    `Content-Transfer-Encoding: base64`,
     "",
-    opts.html,
-    "",
-    `--${boundary}--`,
-  ]
-    .filter((l) => l !== "")
-    .join("\r\n");
+    chunk76(b64(opts.html)),
+  ].join("\r\n");
+
+  const mime = `${headers.join("\r\n")}\r\n\r\n${textPart}\r\n${htmlPart}\r\n--${boundary}--\r\n`;
   return b64url(mime);
 }
 
