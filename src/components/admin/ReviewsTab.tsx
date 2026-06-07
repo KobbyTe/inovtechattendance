@@ -20,6 +20,12 @@ import { Quote, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Review = {
   id: string;
@@ -88,8 +94,10 @@ export function ReviewsTab() {
   const [filterCohort, setFilterCohort] = useState<string>("");
   const [filterRating, setFilterRating] = useState<string>("");
   const [filterEnjoy, setFilterEnjoy] = useState<string>("");
+  const [filterStudent, setFilterStudent] = useState<string>("");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [wallLimit, setWallLimit] = useState(20);
+  const [studentDetail, setStudentDetail] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -118,10 +126,29 @@ export function ReviewsTab() {
         if (filterRating && r.class_rating !== Number(filterRating)) return false;
         if (filterEnjoy === "yes" && r.enjoyment !== true) return false;
         if (filterEnjoy === "no" && r.enjoyment !== false) return false;
+        if (filterStudent && r.student_id !== filterStudent) return false;
         return true;
       }),
-    [reviews, filterCohort, filterRating, filterEnjoy],
+    [reviews, filterCohort, filterRating, filterEnjoy, filterStudent],
   );
+
+  const studentOptions = useMemo(() => {
+    const m = new Map<string, string>();
+    reviews.forEach((r) => m.set(r.student_id, r.student_name));
+    return Array.from(m.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [reviews]);
+
+  const detailReviews = useMemo(
+    () => (studentDetail ? reviews.filter((r) => r.student_id === studentDetail) : []),
+    [studentDetail, reviews],
+  );
+  const detailName = detailReviews[0]?.student_name ?? "";
+  const detailAvg =
+    detailReviews.length > 0
+      ? detailReviews.reduce((s, r) => s + r.class_rating, 0) / detailReviews.length
+      : 0;
 
   const avg =
     reviews.length > 0
@@ -208,6 +235,18 @@ export function ReviewsTab() {
       <Card>
         <CardContent className="pt-5 flex flex-wrap gap-2">
           <select
+            value={filterStudent}
+            onChange={(e) => setFilterStudent(e.target.value)}
+            className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+          >
+            <option value="">All students</option>
+            {studentOptions.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+          <select
             value={filterCohort}
             onChange={(e) => setFilterCohort(e.target.value)}
             className="h-9 rounded-md border border-input bg-background px-2 text-sm"
@@ -261,7 +300,12 @@ export function ReviewsTab() {
                 <CardContent className="pt-5 space-y-3">
                   <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div>
-                      <p className="font-semibold">{r.student_name}</p>
+                      <button
+                        onClick={() => setStudentDetail(r.student_id)}
+                        className="font-semibold text-left hover:text-primary hover:underline cursor-pointer"
+                      >
+                        {r.student_name}
+                      </button>
                       <p className="text-xs text-muted-foreground">
                         {format(parseISO(r.date), "PP")}
                       </p>
@@ -453,6 +497,66 @@ export function ReviewsTab() {
           </>
         )}
       </div>
+
+      <Dialog open={!!studentDetail} onOpenChange={(o) => !o && setStudentDetail(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{detailName} — review history</DialogTitle>
+          </DialogHeader>
+          {detailReviews.length > 0 && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">Reviews</p>
+                  <p className="text-xl font-bold">{detailReviews.length}</p>
+                </div>
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">Avg rating</p>
+                  <p className="text-xl font-bold flex items-center gap-1">
+                    {detailAvg.toFixed(1)}
+                    <Star className="h-4 w-4" fill="#FBBF24" stroke="#FBBF24" />
+                  </p>
+                </div>
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">Loved it</p>
+                  <p className="text-xl font-bold">
+                    {detailReviews.filter((r) => r.enjoyment === true).length}
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                {detailReviews.map((r) => (
+                  <div key={r.id} className="rounded-lg border border-border p-4 space-y-2">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <p className="text-sm font-semibold">
+                        {format(parseISO(r.date), "PPP")}
+                      </p>
+                      <Stars n={r.class_rating} />
+                    </div>
+                    {r.achievements && (
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Achievements</p>
+                        <p className="text-sm">{r.achievements}</p>
+                      </div>
+                    )}
+                    {r.class_feedback && (
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Feedback</p>
+                        <p className="text-sm">{r.class_feedback}</p>
+                      </div>
+                    )}
+                    {r.teacher_note && (
+                      <div className="rounded border-l-4 border-blue-500 bg-blue-500/5 p-2 text-sm italic">
+                        “{r.teacher_note}”
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
