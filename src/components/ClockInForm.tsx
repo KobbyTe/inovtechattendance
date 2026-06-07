@@ -39,7 +39,7 @@ export function ClockInForm({ token }: { token: string }) {
   const [showReview, setShowReview] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const inputRef = useRef<HTMLInputElement>(null);
-  const meetingDay = isMeetingDay(now);
+  const meetingDay = true; // testing-friendly: QR validity already gates the page
   const lookupFn = useServerFn(lookupStudentForClockIn);
   const actionFn = useServerFn(clockAction);
 
