@@ -7,7 +7,43 @@ import { sendGmail, absenceEmail } from "@/lib/gmail.server";
 export const Route = createFileRoute("/api/public/hooks/absence-check")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const url = new URL(request.url);
+        const testTo = url.searchParams.get("testEmail");
+        if (testTo) {
+          const { sendGmail, clockEventEmail } = await import("@/lib/gmail.server");
+          const { data: settings } = await supabaseAdmin
+            .from("app_settings")
+            .select(
+              "email_header_image_url,email_signature,clockin_student_subject,clockin_student_body",
+            )
+            .eq("singleton", true)
+            .maybeSingle();
+          const now = new Date();
+          const msg = clockEventEmail({
+            studentName: "Test Student",
+            recipientName: "Test Student",
+            action: "in",
+            dayName: format(now, "EEEE"),
+            date: format(now, "yyyy-MM-dd"),
+            time: format(now, "h:mm a"),
+            audience: "student",
+            subjectTemplate: settings?.clockin_student_subject ?? null,
+            bodyTemplate: settings?.clockin_student_body ?? null,
+            headerImageUrl: settings?.email_header_image_url ?? null,
+            signature: settings?.email_signature ?? null,
+          });
+          const result = await sendGmail({ to: testTo, ...msg });
+          return Response.json({
+            test: true,
+            to: testTo,
+            subject: msg.subject,
+            headerImageUrl: settings?.email_header_image_url ?? null,
+            textPreview: msg.text.slice(0, 300),
+            htmlPreview: msg.html.slice(0, 600),
+            result,
+          });
+        }
         const now = new Date();
         const dayName = format(now, "EEEE");
         const date = format(now, "yyyy-MM-dd");
