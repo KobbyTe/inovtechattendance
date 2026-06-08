@@ -13,7 +13,6 @@ import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
-import { Route as ApiPublicHooksTestEmailRouteImport } from './routes/api/public/hooks/test-email'
 import { Route as ApiPublicHooksSheetsSyncRouteImport } from './routes/api/public/hooks/sheets-sync'
 import { Route as ApiPublicHooksAbsenceCheckRouteImport } from './routes/api/public/hooks/absence-check'
 
@@ -37,11 +36,6 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/admin/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicHooksTestEmailRoute = ApiPublicHooksTestEmailRouteImport.update({
-  id: '/api/public/hooks/test-email',
-  path: '/api/public/hooks/test-email',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicHooksSheetsSyncRoute =
   ApiPublicHooksSheetsSyncRouteImport.update({
     id: '/api/public/hooks/sheets-sync',
@@ -62,7 +56,6 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
   '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
-  '/api/public/hooks/test-email': typeof ApiPublicHooksTestEmailRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -71,7 +64,6 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
   '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
-  '/api/public/hooks/test-email': typeof ApiPublicHooksTestEmailRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -81,7 +73,6 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
   '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
-  '/api/public/hooks/test-email': typeof ApiPublicHooksTestEmailRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -92,7 +83,6 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/api/public/hooks/absence-check'
     | '/api/public/hooks/sheets-sync'
-    | '/api/public/hooks/test-email'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -101,7 +91,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/api/public/hooks/absence-check'
     | '/api/public/hooks/sheets-sync'
-    | '/api/public/hooks/test-email'
   id:
     | '__root__'
     | '/'
@@ -110,7 +99,6 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/api/public/hooks/absence-check'
     | '/api/public/hooks/sheets-sync'
-    | '/api/public/hooks/test-email'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -120,7 +108,6 @@ export interface RootRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
   ApiPublicHooksAbsenceCheckRoute: typeof ApiPublicHooksAbsenceCheckRoute
   ApiPublicHooksSheetsSyncRoute: typeof ApiPublicHooksSheetsSyncRoute
-  ApiPublicHooksTestEmailRoute: typeof ApiPublicHooksTestEmailRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -153,13 +140,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/test-email': {
-      id: '/api/public/hooks/test-email'
-      path: '/api/public/hooks/test-email'
-      fullPath: '/api/public/hooks/test-email'
-      preLoaderRoute: typeof ApiPublicHooksTestEmailRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/hooks/sheets-sync': {
       id: '/api/public/hooks/sheets-sync'
       path: '/api/public/hooks/sheets-sync'
@@ -184,8 +164,17 @@ const rootRouteChildren: RootRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
   ApiPublicHooksAbsenceCheckRoute: ApiPublicHooksAbsenceCheckRoute,
   ApiPublicHooksSheetsSyncRoute: ApiPublicHooksSheetsSyncRoute,
-  ApiPublicHooksTestEmailRoute: ApiPublicHooksTestEmailRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

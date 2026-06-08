@@ -11,25 +11,44 @@ export const Route = createFileRoute("/api/public/hooks/absence-check")({
         const url = new URL(request.url);
         const testTo = url.searchParams.get("testEmail");
         if (testTo) {
-          const { sendGmail, clockEventEmail } = await import("@/lib/gmail.server");
           const { data: settings } = await supabaseAdmin
             .from("app_settings")
             .select(
-              "email_header_image_url,email_signature,clockin_student_subject,clockin_student_body",
+              "email_header_image_url,email_signature,clockin_student_subject,clockin_student_body,clockin_guardian_subject,clockin_guardian_body,clockout_student_subject,clockout_student_body,clockout_guardian_subject,clockout_guardian_body",
             )
             .eq("singleton", true)
             .maybeSingle();
+          const { clockEventEmail } = await import("@/lib/gmail.server");
           const now = new Date();
+          const action = (url.searchParams.get("action") as "in" | "out") || "in";
+          const audience =
+            (url.searchParams.get("audience") as "student" | "guardian") || "student";
+          const subjTpl =
+            action === "in"
+              ? audience === "student"
+                ? settings?.clockin_student_subject
+                : settings?.clockin_guardian_subject
+              : audience === "student"
+                ? settings?.clockout_student_subject
+                : settings?.clockout_guardian_subject;
+          const bodyTpl =
+            action === "in"
+              ? audience === "student"
+                ? settings?.clockin_student_body
+                : settings?.clockin_guardian_body
+              : audience === "student"
+                ? settings?.clockout_student_body
+                : settings?.clockout_guardian_body;
           const msg = clockEventEmail({
             studentName: "Test Student",
-            recipientName: "Test Student",
-            action: "in",
+            recipientName: audience === "guardian" ? "Test Guardian" : "Test Student",
+            action,
             dayName: format(now, "EEEE"),
             date: format(now, "yyyy-MM-dd"),
             time: format(now, "h:mm a"),
-            audience: "student",
-            subjectTemplate: settings?.clockin_student_subject ?? null,
-            bodyTemplate: settings?.clockin_student_body ?? null,
+            audience,
+            subjectTemplate: subjTpl ?? null,
+            bodyTemplate: bodyTpl ?? null,
             headerImageUrl: settings?.email_header_image_url ?? null,
             signature: settings?.email_signature ?? null,
           });
@@ -37,6 +56,8 @@ export const Route = createFileRoute("/api/public/hooks/absence-check")({
           return Response.json({
             test: true,
             to: testTo,
+            action,
+            audience,
             subject: msg.subject,
             headerImageUrl: settings?.email_header_image_url ?? null,
             textPreview: msg.text.slice(0, 300),
