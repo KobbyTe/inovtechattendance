@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, Loader2, Star, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2, Star } from "lucide-react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -37,7 +37,6 @@ export function SessionReview({
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [countdown, setCountdown] = useState(5);
-  const [askSkip, setAskSkip] = useState(false);
   const flashRef = useRef<number | null>(null);
   const [flashStar, setFlashStar] = useState(0);
   const submitFn = useServerFn(submitSessionReview);
@@ -135,15 +134,6 @@ export function SessionReview({
           boxShadow: "0 30px 80px rgba(0,0,0,0.5)",
         }}
       >
-        {!done && (
-          <button
-            onClick={() => setAskSkip(true)}
-            className="absolute top-3 right-3 text-blue-100/70 hover:text-white text-xs flex items-center gap-1 cursor-pointer"
-          >
-            Skip review <X className="h-3.5 w-3.5" />
-          </button>
-        )}
-
         {!done && (
           <div className="flex items-center justify-center gap-2 mb-6 mt-2">
             {[1, 2, 3, 4].map((n) => (
@@ -387,13 +377,9 @@ export function SessionReview({
                     <ArrowLeft className="h-4 w-4" /> Back
                   </button>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => setAskSkip(true)}
-                    className="text-sm text-blue-100/80 hover:text-white cursor-pointer"
-                  >
-                    Skip review
-                  </button>
+                  <span className="text-xs text-blue-100/60 italic">
+                    Review required to finish
+                  </span>
                 )}
 
                 {step < 4 ? (
@@ -408,14 +394,6 @@ export function SessionReview({
                   </motion.button>
                 ) : (
                   <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={handleSubmit}
-                      disabled={submitting}
-                      className="h-12 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white text-sm font-semibold disabled:opacity-50 cursor-pointer"
-                    >
-                      Skip & Submit
-                    </button>
                     <motion.button
                       whileTap={{ scale: 0.97 }}
                       type="button"
@@ -430,39 +408,6 @@ export function SessionReview({
                     </motion.button>
                   </div>
                 )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {askSkip && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 rounded-t-3xl sm:rounded-3xl flex items-center justify-center p-6"
-              style={{ background: "rgba(7,15,40,0.85)", backdropFilter: "blur(8px)" }}
-            >
-              <div className="bg-white/10 border border-white/20 rounded-2xl p-6 text-center max-w-sm">
-                <p className="font-semibold">Are you sure?</p>
-                <p className="text-sm text-blue-100/80 mt-1">
-                  Your feedback helps us improve.
-                </p>
-                <div className="mt-4 flex gap-2 justify-center">
-                  <button
-                    onClick={() => setAskSkip(false)}
-                    className="h-10 px-4 rounded-lg bg-blue-500 hover:bg-blue-400 text-white text-sm font-semibold cursor-pointer"
-                  >
-                    Continue review
-                  </button>
-                  <button
-                    onClick={onClose}
-                    className="h-10 px-4 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm cursor-pointer"
-                  >
-                    Yes, skip
-                  </button>
-                </div>
               </div>
             </motion.div>
           )}
