@@ -5,6 +5,7 @@ import { verifyAttendanceToken } from "@/lib/attendance-qr.functions";
 import { Loader2, ShieldAlert } from "lucide-react";
 import { ClockInForm } from "@/components/ClockInForm";
 import logoInovtech from "@/assets/logo-inovtech.png";
+import { MeshGradient } from "@paper-design/shaders-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -53,33 +54,25 @@ function Index() {
 
   return (
     <div className="relative min-h-screen flex flex-col bg-bootcamp-gradient overflow-hidden">
-      {/* Animated background blobs */}
-      <div
-        className="blob"
-        style={{ width: 400, height: 400, top: -100, left: -120, background: "#60A5FA" }}
-      />
-      <div
-        className="blob"
-        style={{
-          width: 500,
-          height: 500,
-          bottom: -150,
-          right: -150,
-          background: "#818CF8",
-          animationDelay: "6s",
-        }}
-      />
-      <div
-        className="blob"
-        style={{
-          width: 320,
-          height: 320,
-          top: "40%",
-          left: "55%",
-          background: "#A78BFA",
-          animationDelay: "12s",
-        }}
-      />
+      {/* Aurora / mesh gradient WebGL background */}
+      <div className="absolute inset-0 z-0" aria-hidden="true">
+        <MeshGradient
+          className="h-full w-full"
+          colors={["#0F2167", "#1E40AF", "#4338CA", "#60A5FA", "#A78BFA"]}
+          speed={0.25}
+          distortion={1}
+          swirl={0.8}
+        />
+        <MeshGradient
+          className="absolute inset-0 h-full w-full opacity-40 mix-blend-screen"
+          colors={["#000000", "#818CF8", "#22D3EE", "#000000"]}
+          speed={0.15}
+          distortion={0.9}
+          swirl={0.4}
+        />
+        {/* subtle grain / vignette */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(8,15,50,0.55)_100%)]" />
+      </div>
 
       {/* Header */}
       <header className="relative z-10 px-4 pt-6 pb-2">
