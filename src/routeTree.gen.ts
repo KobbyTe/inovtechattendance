@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as KioskRouteImport } from './routes/kiosk'
 import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -16,6 +17,11 @@ import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as ApiPublicHooksSheetsSyncRouteImport } from './routes/api/public/hooks/sheets-sync'
 import { Route as ApiPublicHooksAbsenceCheckRouteImport } from './routes/api/public/hooks/absence-check'
 
+const KioskRoute = KioskRouteImport.update({
+  id: '/kiosk',
+  path: '/kiosk',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AttendanceRoute = AttendanceRouteImport.update({
   id: '/attendance',
   path: '/attendance',
@@ -52,6 +58,7 @@ const ApiPublicHooksAbsenceCheckRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/attendance': typeof AttendanceRoute
+  '/kiosk': typeof KioskRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
@@ -60,6 +67,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/attendance': typeof AttendanceRoute
+  '/kiosk': typeof KioskRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin': typeof AdminIndexRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/attendance': typeof AttendanceRoute
+  '/kiosk': typeof KioskRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
@@ -79,6 +88,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/attendance'
+    | '/kiosk'
     | '/admin/login'
     | '/admin/'
     | '/api/public/hooks/absence-check'
@@ -87,6 +97,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/attendance'
+    | '/kiosk'
     | '/admin/login'
     | '/admin'
     | '/api/public/hooks/absence-check'
@@ -95,6 +106,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/attendance'
+    | '/kiosk'
     | '/admin/login'
     | '/admin/'
     | '/api/public/hooks/absence-check'
@@ -104,6 +116,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AttendanceRoute: typeof AttendanceRoute
+  KioskRoute: typeof KioskRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminIndexRoute: typeof AdminIndexRoute
   ApiPublicHooksAbsenceCheckRoute: typeof ApiPublicHooksAbsenceCheckRoute
@@ -112,6 +125,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/kiosk': {
+      id: '/kiosk'
+      path: '/kiosk'
+      fullPath: '/kiosk'
+      preLoaderRoute: typeof KioskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/attendance': {
       id: '/attendance'
       path: '/attendance'
@@ -160,6 +180,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AttendanceRoute: AttendanceRoute,
+  KioskRoute: KioskRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminIndexRoute: AdminIndexRoute,
   ApiPublicHooksAbsenceCheckRoute: ApiPublicHooksAbsenceCheckRoute,

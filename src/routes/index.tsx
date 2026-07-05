@@ -6,6 +6,7 @@ import { Loader2, ShieldAlert } from "lucide-react";
 import { ClockInForm } from "@/components/ClockInForm";
 import logoInovtech from "@/assets/logo-inovtech.png";
 import { MeshGradient } from "@paper-design/shaders-react";
+import { LiveTicker } from "@/components/LiveTicker";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -118,6 +119,8 @@ function Index() {
           )}
           {state.kind === "ok" && t && <ClockInForm token={t} />}
         </section>
+
+        <LiveTicker />
       </main>
 
       <footer className="relative z-10 py-6 text-center text-xs text-blue-200/70">
