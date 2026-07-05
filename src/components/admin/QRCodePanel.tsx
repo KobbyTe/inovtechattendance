@@ -132,6 +132,15 @@ export function QRCodePanel() {
           <Copy className="mr-2 h-4 w-4" /> Copy
         </Button>
       </div>
+
+      <a
+        href="/kiosk"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-1 block text-center text-xs font-semibold text-primary hover:underline"
+      >
+        Launch Kiosk Mode → (open on the door tablet)
+      </a>
     </div>
   );
 }
