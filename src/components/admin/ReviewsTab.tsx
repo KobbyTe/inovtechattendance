@@ -16,10 +16,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Quote, Star } from "lucide-react";
+import { Quote, Sparkles, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ReviewWordCloud } from "./ReviewWordCloud";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,9 @@ type Review = {
   class_feedback: string | null;
   teacher_note: string | null;
   submitted_at: string;
+  sentiment?: "positive" | "neutral" | "negative" | null;
+  tags?: string[] | null;
+  keywords?: string[] | null;
 };
 
 type Cohort = { id: string; name: string; color: string };
@@ -199,6 +203,31 @@ export function ReviewsTab() {
   ];
 
   const teacherNotes = reviews.filter((r) => r.teacher_note?.trim());
+
+  const tagCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    filtered.forEach((r) => {
+      (r.tags ?? []).forEach((t) => m.set(t, (m.get(t) ?? 0) + 1));
+    });
+    return Array.from(m.entries())
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [filtered]);
+
+  const allKeywords = useMemo(
+    () => filtered.flatMap((r) => r.keywords ?? []),
+    [filtered],
+  );
+
+  const sentimentSplit = useMemo(() => {
+    const s = { positive: 0, neutral: 0, negative: 0 };
+    filtered.forEach((r) => {
+      if (r.sentiment && r.sentiment in s) s[r.sentiment] += 1;
+    });
+    return s;
+  }, [filtered]);
+  const analyzedCount =
+    sentimentSplit.positive + sentimentSplit.neutral + sentimentSplit.negative;
 
   if (loading) {
     return (
@@ -388,6 +417,46 @@ export function ReviewsTab() {
 
       {/* Analytics */}
       <div className="grid lg:grid-cols-3 gap-4">
+        <Card className="lg:col-span-3">
+          <CardContent className="pt-5">
+            <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-blue-500" />
+                <p className="font-semibold">AI theme cloud</p>
+                <span className="text-xs text-muted-foreground">
+                  {analyzedCount} of {filtered.length} reviews analyzed
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-xs">
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-green-500" />
+                  Positive {sentimentSplit.positive}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-slate-400" />
+                  Neutral {sentimentSplit.neutral}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-amber-500" />
+                  Negative {sentimentSplit.negative}
+                </span>
+              </div>
+            </div>
+            <ReviewWordCloud words={allKeywords} />
+            {tagCounts.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {tagCounts.map(({ tag, count }) => (
+                  <span
+                    key={tag}
+                    className="text-xs font-semibold rounded-full px-3 py-1 bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20"
+                  >
+                    #{tag} · {count}
+                  </span>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
         <Card className="lg:col-span-2">
           <CardContent className="pt-5">
             <p className="font-semibold mb-3">Avg rating — last 8 weeks</p>
