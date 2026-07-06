@@ -12,6 +12,7 @@ import {
   isMeetingDay,
 } from "@/lib/attendance";
 import { SessionReview } from "@/components/SessionReview";
+import { StreakXPCard } from "@/components/StreakXPCard";
 
 type Status = "none" | "active" | "complete";
 type StudentLite = {
@@ -306,6 +307,9 @@ export function ClockInForm({ token }: { token: string }) {
                 </div>
               </div>
             )}
+
+            {/* Streak / XP */}
+            {student && <StreakXPCard studentId={student.student_id} />}
 
             {/* Live clock & date */}
             <div className="text-center text-white">
