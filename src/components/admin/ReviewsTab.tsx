@@ -400,6 +400,33 @@ export function ReviewsTab() {
                     </div>
                   )}
 
+                  {(r.tags?.length ?? 0) > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      <Sparkles className="h-3 w-3 text-blue-500" />
+                      {r.tags!.map((t) => (
+                        <span
+                          key={t}
+                          className="text-[10px] font-semibold rounded-full px-2 py-0.5 bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20"
+                        >
+                          #{t}
+                        </span>
+                      ))}
+                      {r.sentiment && (
+                        <span
+                          className={`text-[10px] font-semibold rounded-full px-2 py-0.5 ${
+                            r.sentiment === "positive"
+                              ? "bg-green-500/15 text-green-700 dark:text-green-300"
+                              : r.sentiment === "negative"
+                                ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                                : "bg-slate-500/15 text-slate-700 dark:text-slate-300"
+                          }`}
+                        >
+                          {r.sentiment}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   <button
                     onClick={() =>
                       setExpanded((p) => ({ ...p, [r.id]: !p[r.id] }))
