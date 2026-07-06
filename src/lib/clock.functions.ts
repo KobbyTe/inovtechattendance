@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { verifyQrToken } from "./attendance-qr.server";
 import { sendGmail, clockEventEmail } from "./gmail.server";
+import { analyzeAndTagReview } from "./sentiment.server";
 
 async function sendClockNotifications(params: {
   studentName: string;
@@ -239,7 +240,9 @@ export const submitSessionReview = createServerFn({ method: "POST" })
     if (!s) throw new Error("Invalid Student ID");
 
     const today = format(new Date(), "yyyy-MM-dd");
-    const { error } = await supabaseAdmin.from("session_reviews").insert({
+    const { data: inserted, error } = await supabaseAdmin
+      .from("session_reviews")
+      .insert({
       attendance_id: data.attendanceId ?? null,
       student_id: s.student_id,
       student_name: s.full_name,
@@ -250,7 +253,21 @@ export const submitSessionReview = createServerFn({ method: "POST" })
       achievements: data.achievements?.trim() || null,
       class_feedback: data.classFeedback?.trim() || null,
       teacher_note: data.teacherNote?.trim() || null,
-    });
+      })
+      .select("id")
+      .single();
     if (error) throw new Error(error.message);
+
+    const combined = [
+      data.achievements,
+      data.classFeedback,
+      data.teacherNote,
+    ]
+      .filter(Boolean)
+      .join("\n");
+    if (inserted?.id && combined.trim()) {
+      // Fire and forget; do not block the student's UI on the AI call.
+      void analyzeAndTagReview(inserted.id, combined);
+    }
     return { ok: true as const };
   });
