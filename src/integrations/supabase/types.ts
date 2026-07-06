@@ -192,6 +192,7 @@ export type Database = {
       session_reviews: {
         Row: {
           achievements: string | null
+          ai_analyzed_at: string | null
           attendance_id: string | null
           class_feedback: string | null
           class_rating: number
@@ -199,13 +200,17 @@ export type Database = {
           date: string
           enjoyment: boolean | null
           id: string
+          keywords: string[]
+          sentiment: string | null
           student_id: string
           student_name: string
           submitted_at: string
+          tags: string[]
           teacher_note: string | null
         }
         Insert: {
           achievements?: string | null
+          ai_analyzed_at?: string | null
           attendance_id?: string | null
           class_feedback?: string | null
           class_rating: number
@@ -213,13 +218,17 @@ export type Database = {
           date: string
           enjoyment?: boolean | null
           id?: string
+          keywords?: string[]
+          sentiment?: string | null
           student_id: string
           student_name: string
           submitted_at?: string
+          tags?: string[]
           teacher_note?: string | null
         }
         Update: {
           achievements?: string | null
+          ai_analyzed_at?: string | null
           attendance_id?: string | null
           class_feedback?: string | null
           class_rating?: number
@@ -227,9 +236,12 @@ export type Database = {
           date?: string
           enjoyment?: boolean | null
           id?: string
+          keywords?: string[]
+          sentiment?: string | null
           student_id?: string
           student_name?: string
           submitted_at?: string
+          tags?: string[]
           teacher_note?: string | null
         }
         Relationships: [
