@@ -13,6 +13,7 @@ import {
 } from "@/lib/attendance";
 import { SessionReview } from "@/components/SessionReview";
 import { StreakXPCard } from "@/components/StreakXPCard";
+import { MyQrCard } from "@/components/MyQrCard";
 
 type Status = "none" | "active" | "complete";
 type StudentLite = {
@@ -310,6 +311,9 @@ export function ClockInForm({ token }: { token: string }) {
 
             {/* Streak / XP */}
             {student && <StreakXPCard studentId={student.student_id} />}
+
+            {/* Permanent personal QR — downloadable */}
+            {student && <MyQrCard token={token} studentId={student.student_id} />}
 
             {/* Live clock & date */}
             <div className="text-center text-white">

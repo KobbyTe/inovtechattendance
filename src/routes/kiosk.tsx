@@ -1,12 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Camera, Flame, LogIn, LogOut, ScanLine, ShieldAlert, Sparkles } from "lucide-react";
+import { Camera, Crown, Flame, LogIn, LogOut, ScanLine, ShieldAlert, Sparkles, Sunrise } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { MeshGradient } from "@paper-design/shaders-react";
 import { verifyAttendanceToken } from "@/lib/attendance-qr.functions";
 import { lookupStudentForClockIn, clockAction } from "@/lib/clock.functions";
 import { getStudentStreak } from "@/lib/live-feed.functions";
+import { kioskClockWithStudentToken } from "@/lib/student-qr.functions";
+import { getStudentTitles } from "@/lib/champions.functions";
 import { format } from "date-fns";
 import { initials } from "@/lib/attendance";
 
@@ -18,6 +20,9 @@ export const Route = createFileRoute("/kiosk")({
       { name: "description", content: "Tablet kiosk mode with auto-scan QR check-in." },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
     ],
+  }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    s: typeof s.s === "string" ? s.s : undefined,
   }),
   component: KioskPage,
 });
@@ -34,9 +39,11 @@ type Stage =
       action: "in" | "out";
       streak: number;
       cohort: { name: string; color: string } | null;
+      titles: Array<"champion" | "earlyBird">;
     };
 
 function KioskPage() {
+  const search = Route.useSearch();
   const [stage, setStage] = useState<Stage>({ kind: "scanning" });
   const [cameraError, setCameraError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -46,6 +53,8 @@ function KioskPage() {
   const lookup = useServerFn(lookupStudentForClockIn);
   const act = useServerFn(clockAction);
   const streakFn = useServerFn(getStudentStreak);
+  const studentClockFn = useServerFn(kioskClockWithStudentToken);
+  const titlesFn = useServerFn(getStudentTitles);
   const navigate = useNavigate();
   const [idInput, setIdInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -56,6 +65,12 @@ function KioskPage() {
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
+
+  // Auto-clock when arriving with ?s=<student-token>
+  useEffect(() => {
+    if (search.s) void handleStudentToken(search.s);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.s]);
 
   // Camera + jsQR scanning
   useEffect(() => {
@@ -111,16 +126,52 @@ function KioskPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage.kind]);
 
+  async function handleStudentToken(token: string) {
+    setStage({ kind: "verifying" });
+    try {
+      const r = await studentClockFn({ data: { token } });
+      const [{ streak }, t] = await Promise.all([
+        streakFn({ data: { studentId: r.student.student_id } }),
+        titlesFn({ data: { studentId: r.student.student_id } }),
+      ]);
+      setStage({
+        kind: "greeting",
+        firstName: r.student.full_name.split(/\s+/)[0],
+        fullName: r.student.full_name,
+        action: r.action,
+        streak,
+        cohort: r.cohort ? { name: r.cohort.name, color: r.cohort.color } : null,
+        titles: t.titles,
+      });
+      setTimeout(() => setStage({ kind: "scanning" }), 6500);
+    } catch (e) {
+      setStage({
+        kind: "invalid",
+        reason: e instanceof Error ? e.message : "Could not clock in",
+      });
+      setTimeout(() => setStage({ kind: "scanning" }), 2800);
+    }
+  }
+
   async function handleScan(raw: string) {
     setStage({ kind: "verifying" });
     try {
-      // Extract ?t= from a URL, or use raw as token
+      // Extract token from a URL (?s= permanent student QR, or ?t= daily QR)
       let token = raw;
+      let sToken: string | null = null;
       try {
         const u = new URL(raw);
+        const s = u.searchParams.get("s");
+        if (s) sToken = s;
         token = u.searchParams.get("t") ?? raw;
       } catch {
         /* not a URL */
+      }
+      // Detect a raw permanent student token
+      if (!sToken && token.startsWith("stu.")) sToken = token;
+      if (sToken) {
+        await handleStudentToken(sToken);
+        return;
       }
       const r = await verify({ data: { token } });
       if (!r.valid) {
@@ -151,9 +202,10 @@ function KioskPage() {
       await act({
         data: { token: stage.token, studentId: info.student.student_id, action },
       });
-      const { streak } = await streakFn({
-        data: { studentId: info.student.student_id },
-      });
+      const [{ streak }, t] = await Promise.all([
+        streakFn({ data: { studentId: info.student.student_id } }),
+        titlesFn({ data: { studentId: info.student.student_id } }),
+      ]);
       const first = info.student.full_name.split(/\s+/)[0];
       setStage({
         kind: "greeting",
@@ -162,6 +214,7 @@ function KioskPage() {
         action,
         streak,
         cohort: info.cohort ? { name: info.cohort.name, color: info.cohort.color } : null,
+        titles: t.titles,
       });
       setIdInput("");
       setTimeout(() => setStage({ kind: "scanning" }), 6500);
@@ -386,6 +439,30 @@ function KioskPage() {
                     {initials(stage.fullName)}
                   </motion.div>
                   <div className="min-w-0">
+                    {stage.titles.length > 0 && (
+                      <div className="mb-2 flex flex-wrap gap-2">
+                        {stage.titles.includes("champion") && (
+                          <motion.span
+                            initial={{ scale: 0, rotate: -20 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            transition={{ type: "spring", stiffness: 340, damping: 14, delay: 0.3 }}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-yellow-400/25 border border-yellow-300/60 px-3 py-1 text-xs font-bold text-yellow-100 shadow-[0_0_20px_rgba(250,204,21,0.5)]"
+                          >
+                            <Crown className="h-3.5 w-3.5" /> Cohort Champion
+                          </motion.span>
+                        )}
+                        {stage.titles.includes("earlyBird") && (
+                          <motion.span
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: "spring", stiffness: 340, damping: 14, delay: 0.4 }}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-orange-400/25 border border-orange-300/60 px-3 py-1 text-xs font-bold text-orange-100"
+                          >
+                            <Sunrise className="h-3.5 w-3.5" /> Early Bird
+                          </motion.span>
+                        )}
+                      </div>
+                    )}
                     <p className="text-sm uppercase tracking-widest text-blue-200/80 flex items-center gap-1.5">
                       {stage.action === "in" ? (
                         <>

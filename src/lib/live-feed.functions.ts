@@ -46,6 +46,7 @@ export const getRecentClockIns = createServerFn({ method: "GET" }).handler(
       const lastInitial = parts.length > 1 ? `${parts[parts.length - 1][0]}.` : "";
       return {
         id: r.id,
+        studentId: r.student_id,
         firstName,
         lastInitial,
         clockIn: r.clock_in,
