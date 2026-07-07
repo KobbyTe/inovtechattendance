@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { LogIn, LogOut, Radio } from "lucide-react";
+import { Crown, LogIn, LogOut, Radio, Sunrise } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { getRecentClockIns } from "@/lib/live-feed.functions";
+import { getCurrentChampions } from "@/lib/champions.functions";
 import { formatTime } from "@/lib/attendance";
 
 type Entry = {
@@ -17,9 +18,14 @@ type Entry = {
 
 export function LiveTicker() {
   const fetchFn = useServerFn(getRecentClockIns);
+  const champFn = useServerFn(getCurrentChampions);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [seen, setSeen] = useState<Set<string>>(new Set());
   const [pulse, setPulse] = useState(false);
+  const [champs, setChamps] = useState<{
+    champion: { studentId: string; name: string; cohort: { name: string; color: string } | null } | null;
+    earlyBird: { studentId: string; name: string; cohort: { name: string; color: string } | null } | null;
+  }>({ champion: null, earlyBird: null });
 
   useEffect(() => {
     let alive = true;
@@ -45,6 +51,7 @@ export function LiveTicker() {
     }
     load();
     const id = setInterval(load, 8000);
+    champFn({ data: {} }).then((r) => setChamps(r)).catch(() => {});
     return () => {
       alive = false;
       clearInterval(id);
@@ -52,8 +59,42 @@ export function LiveTicker() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function nameToFirst(name: string) {
+    const parts = name.trim().split(/\s+/);
+    const initial = parts.length > 1 ? ` ${parts[parts.length - 1][0]}.` : "";
+    return `${parts[0]}${initial}`;
+  }
+
+  function studentTitle(id: string): "champion" | "earlyBird" | null {
+    if (champs.champion?.studentId === id) return "champion";
+    if (champs.earlyBird?.studentId === id) return "earlyBird";
+    return null;
+  }
+
   return (
     <section className="mt-6">
+      {(champs.champion || champs.earlyBird) && (
+        <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {champs.champion && (
+            <div className="glass rounded-xl px-3 py-2 flex items-center gap-2">
+              <Crown className="h-4 w-4 text-yellow-300 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-yellow-200/90">Cohort Champion</p>
+                <p className="text-sm font-bold text-white truncate">{nameToFirst(champs.champion.name)}</p>
+              </div>
+            </div>
+          )}
+          {champs.earlyBird && (
+            <div className="glass rounded-xl px-3 py-2 flex items-center gap-2">
+              <Sunrise className="h-4 w-4 text-orange-300 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-orange-200/90">Early Bird</p>
+                <p className="text-sm font-bold text-white truncate">{nameToFirst(champs.earlyBird.name)}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       <div className="glass rounded-xl px-4 py-2.5 mb-3 flex items-center gap-2">
         <motion.span
           animate={pulse ? { scale: [1, 1.4, 1] } : {}}
@@ -108,6 +149,12 @@ export function LiveTicker() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-white truncate">
                     {r.firstName} {r.lastInitial}{" "}
+                    {studentTitle(r.id) === "champion" && (
+                      <Crown className="inline h-3.5 w-3.5 text-yellow-300 -mt-0.5" />
+                    )}
+                    {studentTitle(r.id) === "earlyBird" && (
+                      <Sunrise className="inline h-3.5 w-3.5 text-orange-300 -mt-0.5" />
+                    )}
                     <span className="text-blue-100/70 font-normal text-xs">
                       {r.action === "in" ? "clocked in" : "clocked out"}
                     </span>
