@@ -3,6 +3,7 @@ import {
   BarChart2,
   Calendar,
   CalendarX,
+  CalendarCheck,
   GraduationCap,
   Layers,
   LogOut,
@@ -23,6 +24,7 @@ export type AdminTab =
   | "records"
   | "reviews"
   | "absences"
+  | "weeklybook"
   | "yearbook"
   | "qr"
   | "settings";
@@ -34,6 +36,7 @@ const TABS: { id: AdminTab; label: string; icon: typeof BarChart2 }[] = [
   { id: "records", label: "Records", icon: Calendar },
   { id: "reviews", label: "Reviews", icon: Star },
   { id: "absences", label: "Absences", icon: CalendarX },
+  { id: "weeklybook", label: "Weeklybook", icon: CalendarCheck },
   { id: "yearbook", label: "Yearbook", icon: Sparkles },
   { id: "qr", label: "QR Code", icon: QrCode },
   { id: "settings", label: "Settings", icon: Settings },
@@ -116,7 +119,7 @@ export function AdminShell({
         </main>
 
         {/* Mobile bottom tab bar */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border grid grid-cols-9 z-50">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border grid grid-cols-10 z-50">
           {TABS.map((t) => (
             <button
               key={t.id}
