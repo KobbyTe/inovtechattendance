@@ -23,9 +23,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Pencil, Plus, QrCode, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { generateStudentId, previewStudentId } from "@/lib/cohorts";
+import { StudentQrModal } from "./StudentQrModal";
 
 const YEARS = ["Year 1", "Year 2", "Year 3", "Year 4"];
 
@@ -36,6 +37,7 @@ export function RosterTab() {
   const [q, setQ] = useState("");
   const [cohortFilter, setCohortFilter] = useState<string>("all");
   const [open, setOpen] = useState(false);
+  const [qrStudent, setQrStudent] = useState<Student | null>(null);
   const [form, setForm] = useState({
     full_name: "",
     year_level: "Year 1",
@@ -312,6 +314,14 @@ export function RosterTab() {
                   <td className="px-4 py-2">{s.year_level}</td>
                   <td className="px-4 py-2">{counts[s.student_id] ?? 0}</td>
                   <td className="px-4 py-2 text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="Show permanent QR"
+                      onClick={() => setQrStudent(s)}
+                    >
+                      <QrCode className="h-4 w-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => openEdit(s)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -339,6 +349,14 @@ export function RosterTab() {
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => openEdit(s)}>
                   <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  title="Show permanent QR"
+                  onClick={() => setQrStudent(s)}
+                >
+                  <QrCode className="h-4 w-4" />
                 </Button>
                 <DeleteBtn onConfirm={() => remove(s.id)} name={s.full_name} />
               </li>
@@ -431,6 +449,12 @@ export function RosterTab() {
           )}
         </SheetContent>
       </Sheet>
+      <StudentQrModal
+        student={qrStudent}
+        cohort={qrStudent?.cohort_id ? cohortById.get(qrStudent.cohort_id) ?? null : null}
+        open={!!qrStudent}
+        onClose={() => setQrStudent(null)}
+      />
     </div>
   );
 }
