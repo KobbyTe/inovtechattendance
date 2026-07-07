@@ -8,6 +8,7 @@ import { formatTime } from "@/lib/attendance";
 
 type Entry = {
   id: string;
+  studentId: string;
   firstName: string;
   lastInitial: string;
   clockIn: string;
@@ -149,10 +150,10 @@ export function LiveTicker() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-white truncate">
                     {r.firstName} {r.lastInitial}{" "}
-                    {studentTitle(r.id) === "champion" && (
+                    {studentTitle(r.studentId) === "champion" && (
                       <Crown className="inline h-3.5 w-3.5 text-yellow-300 -mt-0.5" />
                     )}
-                    {studentTitle(r.id) === "earlyBird" && (
+                    {studentTitle(r.studentId) === "earlyBird" && (
                       <Sunrise className="inline h-3.5 w-3.5 text-orange-300 -mt-0.5" />
                     )}
                     <span className="text-blue-100/70 font-normal text-xs">
