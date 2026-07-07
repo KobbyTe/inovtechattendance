@@ -1,68 +1,75 @@
-## 1. Email header as an uploaded image
+## 1. Permanent per-student QR code
 
-Replace the free-text "Header" field in Settings with an image upload.
+Every student gets a fixed, signed QR that encodes their student ID. Kiosk accepts these as a one-scan clock in/out (no daily QR + ID typing required).
 
-**Storage**
-- New migration: create a public storage bucket `email-assets` with public SELECT and admin-only INSERT/UPDATE/DELETE policies.
-- Add column `email_header_image_url TEXT` to `app_settings` (keep `email_header` for backward compat, but UI stops writing to it).
+**Signing (`src/lib/student-qr.server.ts`)**
 
-**Settings UI (`SettingsTab.tsx`)**
-- Replace the Header text input with a file picker (`accept="image/*"`).
-- On file select:
-  - Read natural width/height; reject if `width < 600 || width > 700 || height < 70 || height > 200` with a toast explaining the required size (600–700 px wide, 70–200 px tall).
-  - Upload to `email-assets/headers/{timestamp}-{filename}` via `supabase.storage`.
-  - Save the public URL into `app_settings.email_header_image_url`.
-- Show a live preview of the current header image with a "Remove" button.
+- `signStudentToken(studentId)` → HMAC-SHA256 over `studentId` using `SUPABASE_SERVICE_ROLE_KEY` (same key path already used by `attendance-qr.server.ts`). Token format: `stu.<b64url(studentId)>.<b64url(sig)>`. No expiry — permanent.
+- `verifyStudentToken(token)` → timing-safe compare, returns `{ valid, studentId }`.
 
-**Email rendering (`gmail.server.ts`)**
-- `absenceEmail()` takes `headerImageUrl?: string` instead of `header` text.
-- In the HTML template, render `<img src="..." width="..." style="display:block;max-width:100%;height:auto;border:0" alt="" />` at the top, no text fallback in HTML; the plain-text part just omits the header.
+**Server fns (`src/lib/student-qr.functions.ts`)**
 
-**Hook (`absence-check.ts`)**
-- Read `email_header_image_url` and pass to `absenceEmail()`.
+- `getStudentQrToken({ studentId })` — admin-only (`requireSupabaseAuth` + `has_role admin`); returns token + a URL `${origin}/kiosk?s=<token>`.
+- `kioskClockWithStudentToken({ token, action? })` — public (unauth): verifies token, resolves student + cohort, auto-decides `in`/`out` when `action` omitted, writes to `attendance` via the existing helpers, returns greeting payload (name, action taken, streak, cohort, plus new champion badges if applicable).
 
-## 2. Daily-rotating QR code
+**Admin UI**
 
-The current `/attendance` page is a static URL. Switch to a signed daily token so a screenshot from a previous day no longer works.
+- New "Student QR" column/action in `RosterTab`: preview modal with `QRCodeCanvas` (student ID centered, cohort color border), Download PNG, Copy link.
+- Bulk "Download all QRs (PDF)" button — one page per student, printable ID-card style, uses `jspdf` + `qrcode` (`bun add jspdf qrcode @types/qrcode`).   
+  
+Student UI  
+Let the student be able to download his/her QR code himself/herself after successfully scanned and ready/during the clock in/clock out. It should appear on the student clock in/clock out dashboard
 
-**DB / secret**
-- Add secret `ATTENDANCE_QR_SECRET` (random string) for HMAC signing — generated server-side.
+**Kiosk (`src/routes/kiosk.tsx`)**
 
-**Server function `getAttendanceQrToken` (admin only)**
-- Input: optional `date` (defaults to today, server timezone).
-- Validates the date is a meeting day (Wed/Thu/Fri); otherwise returns `{ ok: false, reason }`.
-- Returns `{ token, date, expiresAt }` where `token = base64url(date) + "." + hmacSHA256(date, secret)`.
+- Auto-detect scanned payload: if it parses as `stu.*` (or URL `?s=`), skip verify-daily-QR + ID-entry stages and go straight to `kioskClockWithStudentToken` → greeting. Daily QR flow stays as a fallback.
+- Query param `/kiosk?s=<token>` also auto-clocks (allows opening the student's QR link directly).
 
-**Attendance route (`/attendance`)**
-- Now accepts `?t=<token>` query param.
-- On load, calls a server function `verifyAttendanceToken({ token })` that:
-  - Recomputes HMAC, checks token's embedded date equals today (server time), and that today is a meeting day.
-  - Returns `{ valid: true }` or `{ valid: false, reason }`.
-- If invalid/expired: show a friendly "This QR code has expired — ask the admin for today's code" screen; do NOT render the clock-in form.
-- If valid: render the existing `ClockInForm`.
+## 2. Champion / crown system
 
-**Admin QR panel (`QRCodePanel.tsx`)**
-- Replace the static URL with:
-  - A date selector defaulting to today (restricted to meeting days, next ~14 days).
-  - "Generate QR for {date}" button → calls `getAttendanceQrToken`.
-  - Encode `${origin}/attendance?t=${token}` in the QR.
-  - Show date, expiration ("Expires at end of {dayName}"), Download, Copy link.
-- Optional UX: auto-generate today's QR on mount when today is a meeting day.
+Two live titles calculated from `attendance`:
 
-**Security notes**
-- Token is bound to the day only, not to a device, so a student can still forward it within the same day — acceptable for a bootcamp roll call, much stronger than the current permanent link.
-- Secret lives only on the server; verification is server-side; client never sees the secret.
+- **Attendance Champion** — highest attended-days count in the current cohort window (ties broken by highest streak).
+- **Early Bird** — student with the most days this cohort where they were the *first* to clock in.  
+The system should use the highest attended-days count together with the student with the most days this cohort where they were the *first* to clock in to crown the champion.
 
-## Files touched
+**Server fn (`src/lib/champions.functions.ts`)**
 
-- new migration: bucket + storage policies + `email_header_image_url` column
-- `src/components/admin/SettingsTab.tsx` — image upload UI
-- `src/lib/gmail.server.ts` — image-based header
-- `src/routes/api/public/hooks/absence-check.ts` — pass new field
-- `src/lib/attendance-qr.functions.ts` (new) — `getAttendanceQrToken`, `verifyAttendanceToken`
-- `src/lib/attendance-qr.server.ts` (new) — HMAC helpers, reads `ATTENDANCE_QR_SECRET`
-- `src/components/admin/QRCodePanel.tsx` — dynamic generation UI
-- `src/routes/attendance.tsx` — token verification gate
-- add secret `ATTENDANCE_QR_SECRET`
+- `getCurrentChampions({ cohortId })` → `{ champion, earlyBird }` with name, avatar initials, count, cohort color.
+- `getStudentTitles({ studentId })` → subset of `["champion","earlyBird","streak"]` the student currently holds — used to render a crown/flame overlay on the kiosk greeting and Live Ticker.
 
-Confirm and I'll implement.
+**UI touch-ups**
+
+- Kiosk greeting: if returned titles include `champion`, render a gold `Crown` badge above the name with a subtle sparkle burst; `earlyBird` shows a sunrise chip; existing streak flame stays.
+- `LiveTicker`: append a small crown icon next to the champion's row when they appear.
+- Landing hero: a compact "This week's champions" strip (name + cohort color pill + title).
+
+## 3. Weeklybook (weekly recap)
+
+Same visual family as the yearbook but scoped to one week per cohort.
+
+**Server fn** — extend `gamification.functions.ts`:
+
+- `getCohortWeekbook({ cohortId, weekStart? })` — defaults to current week; returns KPIs for that week's meeting days (attendance %, hours, session count), top 5 by attendance %, the week's Champion + Early Bird + Streak Leader, plus any reviews left that week.
+
+**Admin UI (`src/components/admin/WeeklybookTab.tsx`)**
+
+- New "Weeklybook" tab in `AdminShell` + `admin.index.tsx`.
+- Cohort selector + week picker (prev/this/next arrows).
+- 1080×1350 shareable card (mirrors YearbookTab layout), Champion + Early Bird featured on top with `Crown` / `Sunrise` icons, exports via `html-to-image` and Web Share API — same pattern as existing yearbook.
+
+## 4. End-of-cohort book (enhancement to existing YearbookTab)
+
+Existing Yearbook stays; add a "Book mode" toggle that renders a multi-page shareable PDF (cover + weekly recaps for every week in the cohort + final leaderboard). Reuses `getCohortWeekbook` per week and `getCohortYearbook` for the cover. Exports via `jspdf` (already added above) so users can print/share the whole cohort's story.
+
+## Technical notes
+
+- No schema changes required — champions and books derive from existing `attendance`, `students`, `cohorts`, `session_reviews`.
+- Student QR tokens are unauthenticated by design (they only allow clocking that specific student in/out — same trust model as a physical ID card); token validity is enforced by HMAC signature and today-must-be-a-meeting-day check reuses `isMeetingDay`.
+- `kioskClockWithStudentToken` is public but rate-limitable per student_id (simple in-memory throttle on the worker — already acceptable for a tablet-at-the-door use case).
+
+## Files
+
+- **New**: `src/lib/student-qr.server.ts`, `src/lib/student-qr.functions.ts`, `src/lib/champions.functions.ts`, `src/components/admin/WeeklybookTab.tsx`, `src/components/admin/StudentQrModal.tsx`
+- **Updated**: `src/routes/kiosk.tsx` (student-QR fast path + champion overlay), `src/components/admin/RosterTab.tsx` (per-student QR + bulk PDF), `src/components/admin/AdminShell.tsx` + `src/routes/admin.index.tsx` (Weeklybook tab), `src/components/admin/YearbookTab.tsx` (book/PDF export + champion styling), `src/components/LiveTicker.tsx` (crown chip), `src/routes/index.tsx` (champions strip), `src/lib/gamification.functions.ts` (`getCohortWeekbook`).
+- **Deps added**: `jspdf`, `qrcode`, `@types/qrcode`.
