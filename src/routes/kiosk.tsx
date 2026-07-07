@@ -439,6 +439,30 @@ function KioskPage() {
                     {initials(stage.fullName)}
                   </motion.div>
                   <div className="min-w-0">
+                    {stage.titles.length > 0 && (
+                      <div className="mb-2 flex flex-wrap gap-2">
+                        {stage.titles.includes("champion") && (
+                          <motion.span
+                            initial={{ scale: 0, rotate: -20 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            transition={{ type: "spring", stiffness: 340, damping: 14, delay: 0.3 }}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-yellow-400/25 border border-yellow-300/60 px-3 py-1 text-xs font-bold text-yellow-100 shadow-[0_0_20px_rgba(250,204,21,0.5)]"
+                          >
+                            <Crown className="h-3.5 w-3.5" /> Cohort Champion
+                          </motion.span>
+                        )}
+                        {stage.titles.includes("earlyBird") && (
+                          <motion.span
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: "spring", stiffness: 340, damping: 14, delay: 0.4 }}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-orange-400/25 border border-orange-300/60 px-3 py-1 text-xs font-bold text-orange-100"
+                          >
+                            <Sunrise className="h-3.5 w-3.5" /> Early Bird
+                          </motion.span>
+                        )}
+                      </div>
+                    )}
                     <p className="text-sm uppercase tracking-widest text-blue-200/80 flex items-center gap-1.5">
                       {stage.action === "in" ? (
                         <>
