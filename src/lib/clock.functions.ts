@@ -228,8 +228,19 @@ export const submitSessionReview = createServerFn({ method: "POST" })
       .parse(i),
   )
   .handler(async ({ data }) => {
-    const t = verifyQrToken(data.token);
-    if (!t.valid) throw new Error(t.reason || "Invalid QR code");
+    // Accept either the daily attendance token OR a permanent student QR
+    // token — the kiosk uses the student token for auto-scan flows.
+    if (data.token.startsWith("stu.")) {
+      const { verifyStudentToken } = await import("./student-qr.server");
+      const st = verifyStudentToken(data.token);
+      if (!st.valid) throw new Error(st.reason || "Invalid QR code");
+      if (st.studentId?.toUpperCase() !== data.studentId.toUpperCase()) {
+        throw new Error("Student mismatch");
+      }
+    } else {
+      const t = verifyQrToken(data.token);
+      if (!t.valid) throw new Error(t.reason || "Invalid QR code");
+    }
 
     const { data: s, error: sErr } = await supabaseAdmin
       .from("students")
