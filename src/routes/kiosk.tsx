@@ -559,6 +559,22 @@ function KioskPage() {
           )}
         </AnimatePresence>
       </main>
+
+      <AnimatePresence>
+        {reviewCtx && (
+          <SessionReview
+            token={reviewCtx.token}
+            studentId={reviewCtx.studentId}
+            studentName={reviewCtx.studentName}
+            attendanceId={reviewCtx.attendanceId}
+            onClose={() => {
+              setReviewCtx(null);
+              setStage({ kind: "scanning" });
+              if (search.s) void navigate({ to: "/kiosk", search: {} });
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
