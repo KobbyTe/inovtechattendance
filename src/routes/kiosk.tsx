@@ -246,7 +246,18 @@ function KioskPage() {
         titles: t.titles,
       });
       setIdInput("");
-      setTimeout(() => setStage({ kind: "scanning" }), 6500);
+      if (action === "out") {
+        setTimeout(() => {
+          setReviewCtx({
+            token: stage.token,
+            studentId: info.student.student_id,
+            studentName: info.student.full_name,
+            attendanceId: null,
+          });
+        }, 2200);
+      } else {
+        setTimeout(() => setStage({ kind: "scanning" }), 6500);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not clock in.");
     } finally {
