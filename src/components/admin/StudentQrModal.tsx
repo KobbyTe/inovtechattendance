@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { getStudentQrToken } from "@/lib/student-qr.functions";
 import type { Cohort, Student } from "@/types";
+import logoInovtech from "@/assets/logo-inovtech.png";
+import { downloadQrWithLogo } from "@/lib/qr-logo";
 
 export function StudentQrModal({
   student,
@@ -43,13 +45,14 @@ export function StudentQrModal({
     };
   }, [open, student, mint]);
 
-  function download() {
-    const canvas = cardRef.current?.querySelector("canvas");
+  async function download() {
+    const canvas = cardRef.current?.querySelector("canvas") as HTMLCanvasElement | null;
     if (!canvas || !student) return;
-    const link = document.createElement("a");
-    link.download = `${student.student_id}-qr.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
+    try {
+      await downloadQrWithLogo(canvas, `inovtech-${student.student_id}.png`);
+    } catch {
+      toast.error("Download failed");
+    }
   }
 
   async function copy() {
@@ -84,14 +87,28 @@ export function StudentQrModal({
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
                 ) : (
-                  <QRCodeCanvas
-                    value={url}
-                    size={256}
-                    fgColor={accent}
-                    bgColor="#FFFFFF"
-                    level="H"
-                    includeMargin={false}
-                  />
+                  <div className="relative">
+                    <QRCodeCanvas
+                      value={url}
+                      size={256}
+                      fgColor={accent}
+                      bgColor="#FFFFFF"
+                      level="H"
+                      includeMargin={false}
+                    />
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                      <div
+                        className="bg-white rounded-lg p-1.5 shadow ring-1"
+                        style={{ borderColor: accent }}
+                      >
+                        <img
+                          src={logoInovtech}
+                          alt="Inovtech"
+                          className="h-12 w-12 object-contain"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
               <p className="text-center font-mono text-sm text-slate-700 tracking-widest">

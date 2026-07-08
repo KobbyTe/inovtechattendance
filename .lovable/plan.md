@@ -1,75 +1,73 @@
-## 1. Permanent per-student QR code
+## 1. Compulsory kiosk review (on clock-out)
 
-Every student gets a fixed, signed QR that encodes their student ID. Kiosk accepts these as a one-scan clock in/out (no daily QR + ID typing required).
+Reviews only make sense after a session, so trigger the flow on **clock-out** (not clock-in). Clock-in stays a 1-second "Welcome back" celebration.
 
-**Signing (`src/lib/student-qr.server.ts`)**
+**Flow on the kiosk after a successful clock-out scan:**
 
-- `signStudentToken(studentId)` → HMAC-SHA256 over `studentId` using `SUPABASE_SERVICE_ROLE_KEY` (same key path already used by `attendance-qr.server.ts`). Token format: `stu.<b64url(studentId)>.<b64url(sig)>`. No expiry — permanent.
-- `verifyStudentToken(token)` → timing-safe compare, returns `{ valid, studentId }`.
+```text
+scan QR → "Goodbye, Kwabena 👋" hero (2s)
+       → Review sheet slides up (cannot be dismissed)
+       → 1-tap star rating (1–5, huge touch targets)
+       → Quick-tag chips (pacing / content / instructor / clarity / energy) — multi-select
+       → Optional 1-line note (voice-to-text button using Web Speech API)
+       → "Submit & finish" → confetti → returns to idle scanner
+       → Skip is NOT available; only "Submit" advances
+```
 
-**Server fns (`src/lib/student-qr.functions.ts`)**
+**Why compulsory works here:** the student is already standing at the tablet, the door is right there, and they can't leave the kiosk view without tapping submit. If they walk away, a 60s watchdog auto-submits with just the star rating (so we never lose the clock-out record, and we never store a fake tag/note).
 
-- `getStudentQrToken({ studentId })` — admin-only (`requireSupabaseAuth` + `has_role admin`); returns token + a URL `${origin}/kiosk?s=<token>`.
-- `kioskClockWithStudentToken({ token, action? })` — public (unauth): verifies token, resolves student + cohort, auto-decides `in`/`out` when `action` omitted, writes to `attendance` via the existing helpers, returns greeting payload (name, action taken, streak, cohort, plus new champion badges if applicable).
+**Design language (matches the aurora/hero system already in the app):**
+- Full-screen frosted-glass sheet over the aurora shader, spring-in from bottom (framer-motion `type: "spring", stiffness: 260, damping: 26`).
+- Stars are 72px, fill-and-scale on tap with a soft haptic-style bounce, and the sheet's accent gradient shifts hue with the rating (red→amber→emerald).
+- Tag chips use the cohort color as the "selected" ring; unselected chips have a subtle shimmer sweep every 4s to signal they're tappable.
+- Submit button is disabled until a star is chosen, then pulses gently.
+- After submit: `Sparkles` burst + "Thanks — sentiment logged ✨" toast, then auto-return to the scanner in 2s.
 
-**Admin UI**
+**Wiring:**
+- New `KioskReviewSheet` component in `src/components/kiosk/KioskReviewSheet.tsx`.
+- `kiosk.tsx` state machine gains a `"review"` phase entered only when `action === "out"`. The existing `kioskClockWithStudentToken` handler already knows the action, so we return `{ requiresReview: true, attendanceId }` on clock-outs and the client blocks idle-return until submitted.
+- Submission reuses `submitSessionReview` from `src/lib/clock.functions.ts` (already fires the Gemini sentiment tagger). We add an `attendanceId` param so the kiosk path can post without a daily-QR token — server verifies the row was just written by the same kiosk endpoint (short-lived signed ticket returned alongside `requiresReview`).
 
-- New "Student QR" column/action in `RosterTab`: preview modal with `QRCodeCanvas` (student ID centered, cohort color border), Download PNG, Copy link.
-- Bulk "Download all QRs (PDF)" button — one page per student, printable ID-card style, uses `jspdf` + `qrcode` (`bun add jspdf qrcode @types/qrcode`).   
-  
-Student UI  
-Let the student be able to download his/her QR code himself/herself after successfully scanned and ready/during the clock in/clock out. It should appear on the student clock in/clock out dashboard
+## 2. Downloadable personal QR with the Inovtech logo
 
-**Kiosk (`src/routes/kiosk.tsx`)**
+Two surfaces already exist (`MyQrCard` for the student's own dashboard, `StudentQrModal` for admins). Both currently render a plain QR. We upgrade both to the same premium card used by `QRCodePanel`.
 
-- Auto-detect scanned payload: if it parses as `stu.*` (or URL `?s=`), skip verify-daily-QR + ID-entry stages and go straight to `kioskClockWithStudentToken` → greeting. Daily QR flow stays as a fallback.
-- Query param `/kiosk?s=<token>` also auto-clocks (allows opening the student's QR link directly).
+**Visual (identical treatment across student + admin views):**
+- Gradient border ring (cohort color → primary), `shadow-[0_20px_60px_-20px_rgba(29,78,216,0.55)]`, soft float animation.
+- White QR canvas at 300px with `level="H"` (the H error-correction level tolerates the logo overlay without breaking scans).
+- Center overlay: `logo-inovtech.png` inside a white 12px-padded rounded square with a 1px primary ring (same treatment as `QRCodePanel`). Absolutely positioned, `pointer-events-none`.
+- Below the QR: student full name (bold), student ID in mono tracking-widest, cohort chip, tagline "Scan me at the kiosk".
+- Reveal animation: card spring-scales in, QR modules do a subtle stagger fade (mask-based reveal from top-left → bottom-right).
 
-## 2. Champion / crown system
+**Downloading (this is where the logo matters — a DOM screenshot loses crispness):**
+- Render QR to an offscreen `<canvas>` at 2× (600px).
+- After render, draw the logo onto the same canvas via `ctx.drawImage` (white rounded rect → logo). This gives a single flat PNG with the logo baked in, at export resolution, not a screenshot.
+- Provide two buttons:
+  - **Download PNG** — `canvas.toDataURL("image/png")`, filename `inovtech-{studentId}.png`.
+  - **Download card (PDF)** — uses `jspdf` (already installed) to place the composited PNG onto an A6 card with the student's name, cohort, and "Scan at the kiosk" caption. Nice for printing lanyard cards.
+- Web Share API fallback on mobile: if `navigator.share` supports files, offer "Share to Photos / WhatsApp".
 
-Two live titles calculated from `attendance`:
+**Student self-service (no admin needed):**
+- `MyQrCard` currently requires today's daily-QR token before minting. Keep that guard (prevents strangers minting tokens for arbitrary IDs), but after any successful clock-in the token is already in scope — the card auto-expands and pre-mints so the download is one tap away.
+- Add a persistent "My QR" button in the app header (`AppHeader.tsx`) that opens a full-screen sheet with the same premium card, once the student has clocked in at least once (we cache the last valid token in `sessionStorage`, cleared on tab close).
 
-- **Attendance Champion** — highest attended-days count in the current cohort window (ties broken by highest streak).
-- **Early Bird** — student with the most days this cohort where they were the *first* to clock in.  
-The system should use the highest attended-days count together with the student with the most days this cohort where they were the *first* to clock in to crown the champion.
+**Admin bulk export (bonus, tiny scope):**
+- `StudentQrModal` gets a "Download all in cohort" action in `RosterTab.tsx` that streams each student's composited PNG into a single multi-page PDF (one card per page, 4-up on A4). Reuses the same canvas compositor.
 
-**Server fn (`src/lib/champions.functions.ts`)**
+## Files touched
 
-- `getCurrentChampions({ cohortId })` → `{ champion, earlyBird }` with name, avatar initials, count, cohort color.
-- `getStudentTitles({ studentId })` → subset of `["champion","earlyBird","streak"]` the student currently holds — used to render a crown/flame overlay on the kiosk greeting and Live Ticker.
+**New**
+- `src/components/kiosk/KioskReviewSheet.tsx` — compulsory review UI.
+- `src/lib/qr-compositor.ts` — pure function: `renderQrWithLogo({ url, size, fgColor, logoSrc }) → HTMLCanvasElement`. Used by MyQrCard, StudentQrModal, and the bulk PDF.
+- `src/components/PremiumQrCard.tsx` — shared visual card (logo + gradient ring + animations) used by student + admin.
 
-**UI touch-ups**
+**Updated**
+- `src/routes/kiosk.tsx` — add `"review"` phase for clock-outs, wire watchdog + confetti.
+- `src/lib/student-qr.functions.ts` — `kioskClockWithStudentToken` returns `{ requiresReview, reviewTicket }` on `action === "out"`.
+- `src/lib/clock.functions.ts` — `submitSessionReview` accepts an alternative `{ attendanceId, reviewTicket }` auth path used by the kiosk.
+- `src/components/MyQrCard.tsx` — swap plain QR for `PremiumQrCard`; add PDF + share buttons.
+- `src/components/admin/StudentQrModal.tsx` — same swap; add cohort bulk export.
+- `src/components/admin/RosterTab.tsx` — "Export all QR cards (PDF)" button per cohort.
+- `src/components/AppHeader.tsx` — "My QR" quick-access button after first clock-in.
 
-- Kiosk greeting: if returned titles include `champion`, render a gold `Crown` badge above the name with a subtle sparkle burst; `earlyBird` shows a sunrise chip; existing streak flame stays.
-- `LiveTicker`: append a small crown icon next to the champion's row when they appear.
-- Landing hero: a compact "This week's champions" strip (name + cohort color pill + title).
-
-## 3. Weeklybook (weekly recap)
-
-Same visual family as the yearbook but scoped to one week per cohort.
-
-**Server fn** — extend `gamification.functions.ts`:
-
-- `getCohortWeekbook({ cohortId, weekStart? })` — defaults to current week; returns KPIs for that week's meeting days (attendance %, hours, session count), top 5 by attendance %, the week's Champion + Early Bird + Streak Leader, plus any reviews left that week.
-
-**Admin UI (`src/components/admin/WeeklybookTab.tsx`)**
-
-- New "Weeklybook" tab in `AdminShell` + `admin.index.tsx`.
-- Cohort selector + week picker (prev/this/next arrows).
-- 1080×1350 shareable card (mirrors YearbookTab layout), Champion + Early Bird featured on top with `Crown` / `Sunrise` icons, exports via `html-to-image` and Web Share API — same pattern as existing yearbook.
-
-## 4. End-of-cohort book (enhancement to existing YearbookTab)
-
-Existing Yearbook stays; add a "Book mode" toggle that renders a multi-page shareable PDF (cover + weekly recaps for every week in the cohort + final leaderboard). Reuses `getCohortWeekbook` per week and `getCohortYearbook` for the cover. Exports via `jspdf` (already added above) so users can print/share the whole cohort's story.
-
-## Technical notes
-
-- No schema changes required — champions and books derive from existing `attendance`, `students`, `cohorts`, `session_reviews`.
-- Student QR tokens are unauthenticated by design (they only allow clocking that specific student in/out — same trust model as a physical ID card); token validity is enforced by HMAC signature and today-must-be-a-meeting-day check reuses `isMeetingDay`.
-- `kioskClockWithStudentToken` is public but rate-limitable per student_id (simple in-memory throttle on the worker — already acceptable for a tablet-at-the-door use case).
-
-## Files
-
-- **New**: `src/lib/student-qr.server.ts`, `src/lib/student-qr.functions.ts`, `src/lib/champions.functions.ts`, `src/components/admin/WeeklybookTab.tsx`, `src/components/admin/StudentQrModal.tsx`
-- **Updated**: `src/routes/kiosk.tsx` (student-QR fast path + champion overlay), `src/components/admin/RosterTab.tsx` (per-student QR + bulk PDF), `src/components/admin/AdminShell.tsx` + `src/routes/admin.index.tsx` (Weeklybook tab), `src/components/admin/YearbookTab.tsx` (book/PDF export + champion styling), `src/components/LiveTicker.tsx` (crown chip), `src/routes/index.tsx` (champions strip), `src/lib/gamification.functions.ts` (`getCohortWeekbook`).
-- **Deps added**: `jspdf`, `qrcode`, `@types/qrcode`.
+No DB migration required — reviews already have a table, and the QR tokens are HMAC-signed (no new columns).

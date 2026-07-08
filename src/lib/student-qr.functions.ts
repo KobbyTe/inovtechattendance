@@ -109,15 +109,20 @@ export const kioskClockWithStudentToken = createServerFn({ method: "POST" })
     const auto: "in" | "out" = !rec ? "in" : rec.clock_out ? "in" : "out";
     const action = data.action ?? auto;
 
+    let attendanceId: string | null = null;
+
     if (action === "in") {
       if (!rec || rec.clock_out) {
-        const { error } = await supabaseAdmin.from("attendance").insert({
+        const { data: ins, error } = await supabaseAdmin.from("attendance").insert({
           student_id: s.student_id,
           student_name: s.full_name,
           date: today,
           day_name: dayName,
-        });
+        }).select("id").single();
         if (error) throw new Error(error.message);
+        attendanceId = ins?.id ?? null;
+      } else {
+        attendanceId = rec.id;
       }
     } else {
       if (!rec || rec.clock_out) throw new Error("No active clock-in found for today.");
@@ -126,6 +131,7 @@ export const kioskClockWithStudentToken = createServerFn({ method: "POST" })
         .update({ clock_out: now.toISOString() })
         .eq("id", rec.id);
       if (error) throw new Error(error.message);
+      attendanceId = rec.id;
     }
 
     // Best-effort notifications
@@ -193,6 +199,7 @@ export const kioskClockWithStudentToken = createServerFn({ method: "POST" })
 
     return {
       action,
+      attendanceId,
       student: {
         student_id: s.student_id,
         full_name: s.full_name,
