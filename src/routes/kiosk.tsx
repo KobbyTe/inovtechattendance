@@ -221,6 +221,7 @@ function KioskPage() {
   async function submitId(e: React.FormEvent) {
     e.preventDefault();
     if (stage.kind !== "id-entry") return;
+    const dailyToken = stage.token;
     const id = idInput.trim();
     if (!id) return;
     setBusy(true);
@@ -249,7 +250,7 @@ function KioskPage() {
       if (action === "out") {
         setTimeout(() => {
           setReviewCtx({
-            token: stage.token,
+            token: dailyToken,
             studentId: info.student.student_id,
             studentName: info.student.full_name,
             attendanceId: null,
