@@ -11,6 +11,7 @@ import { kioskClockWithStudentToken } from "@/lib/student-qr.functions";
 import { getStudentTitles } from "@/lib/champions.functions";
 import { format } from "date-fns";
 import { initials } from "@/lib/attendance";
+import { SessionReview } from "@/components/SessionReview";
 
 export const Route = createFileRoute("/kiosk")({
   ssr: false,
@@ -40,6 +41,9 @@ type Stage =
       streak: number;
       cohort: { name: string; color: string } | null;
       titles: Array<"champion" | "earlyBird">;
+      reviewToken?: string;
+      studentId?: string;
+      attendanceId?: string | null;
     };
 
 function KioskPage() {
@@ -60,6 +64,15 @@ function KioskPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
+  const [reviewCtx, setReviewCtx] = useState<
+    | {
+        token: string;
+        studentId: string;
+        studentName: string;
+        attendanceId: string | null;
+      }
+    | null
+  >(null);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -142,8 +155,24 @@ function KioskPage() {
         streak,
         cohort: r.cohort ? { name: r.cohort.name, color: r.cohort.color } : null,
         titles: t.titles,
+        reviewToken: token,
+        studentId: r.student.student_id,
+        attendanceId: r.attendanceId ?? null,
       });
-      setTimeout(() => setStage({ kind: "scanning" }), 6500);
+      if (r.action === "out") {
+        // Compulsory review after clock-out — hold the greeting briefly,
+        // then open the mandatory review sheet.
+        setTimeout(() => {
+          setReviewCtx({
+            token,
+            studentId: r.student.student_id,
+            studentName: r.student.full_name,
+            attendanceId: r.attendanceId ?? null,
+          });
+        }, 2200);
+      } else {
+        setTimeout(() => setStage({ kind: "scanning" }), 6500);
+      }
     } catch (e) {
       setStage({
         kind: "invalid",
