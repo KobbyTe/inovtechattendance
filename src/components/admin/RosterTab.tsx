@@ -291,6 +291,15 @@ export function RosterTab() {
                   onChange={(e) => setForm({ ...form, student_email: e.target.value })}
                 />
               </div>
+              <div className="space-y-2">
+                <Label>RFID card UID (optional)</Label>
+                <Input
+                  value={form.rfid_uid}
+                  placeholder="e.g. 04A2B3C4"
+                  className="font-mono uppercase"
+                  onChange={(e) => setForm({ ...form, rfid_uid: e.target.value })}
+                />
+              </div>
               <Button type="submit" disabled={busy} className="w-full h-11">
                 {busy ? "Adding…" : "Add student"}
               </Button>
@@ -452,6 +461,18 @@ export function RosterTab() {
                   value={editForm.student_email}
                   onChange={(e) => setEditForm({ ...editForm, student_email: e.target.value })}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>RFID card UID</Label>
+                <Input
+                  value={editForm.rfid_uid}
+                  placeholder="Tap the card on a reader to get its UID"
+                  className="font-mono uppercase"
+                  onChange={(e) => setEditForm({ ...editForm, rfid_uid: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Used by the RFID kiosk reader. Leave empty to unassign.
+                </p>
               </div>
               <Button type="submit" disabled={savingEdit} className="w-full h-11">
                 {savingEdit ? "Saving…" : "Save changes"}
