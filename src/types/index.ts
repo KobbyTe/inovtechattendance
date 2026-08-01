@@ -8,6 +8,7 @@ export interface Student {
   guardian_name: string | null;
   guardian_email: string | null;
   student_email: string | null;
+  rfid_uid: string | null;
 }
 
 export interface AttendanceRecord {
