@@ -120,6 +120,7 @@ export type Database = {
           date: string
           day_name: string
           id: string
+          source: string
           student_id: string
           student_name: string
         }
@@ -130,6 +131,7 @@ export type Database = {
           date?: string
           day_name: string
           id?: string
+          source?: string
           student_id: string
           student_name: string
         }
@@ -140,6 +142,7 @@ export type Database = {
           date?: string
           day_name?: string
           id?: string
+          source?: string
           student_id?: string
           student_name?: string
         }
@@ -269,6 +272,7 @@ export type Database = {
           guardian_email: string | null
           guardian_name: string | null
           id: string
+          rfid_uid: string | null
           student_email: string | null
           student_id: string
           year_level: string
@@ -280,6 +284,7 @@ export type Database = {
           guardian_email?: string | null
           guardian_name?: string | null
           id?: string
+          rfid_uid?: string | null
           student_email?: string | null
           student_id: string
           year_level: string
@@ -291,6 +296,7 @@ export type Database = {
           guardian_email?: string | null
           guardian_name?: string | null
           id?: string
+          rfid_uid?: string | null
           student_email?: string | null
           student_id?: string
           year_level?: string

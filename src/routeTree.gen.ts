@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as ApiPublicHooksSheetsSyncRouteImport } from './routes/api/public/hooks/sheets-sync'
+import { Route as ApiPublicHooksRfidClockRouteImport } from './routes/api/public/hooks/rfid-clock'
 import { Route as ApiPublicHooksAbsenceCheckRouteImport } from './routes/api/public/hooks/absence-check'
 
 const KioskRoute = KioskRouteImport.update({
@@ -48,6 +49,11 @@ const ApiPublicHooksSheetsSyncRoute =
     path: '/api/public/hooks/sheets-sync',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksRfidClockRoute = ApiPublicHooksRfidClockRouteImport.update({
+  id: '/api/public/hooks/rfid-clock',
+  path: '/api/public/hooks/rfid-clock',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksAbsenceCheckRoute =
   ApiPublicHooksAbsenceCheckRouteImport.update({
     id: '/api/public/hooks/absence-check',
@@ -62,6 +68,7 @@ export interface FileRoutesByFullPath {
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
+  '/api/public/hooks/rfid-clock': typeof ApiPublicHooksRfidClockRoute
   '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
 }
 export interface FileRoutesByTo {
@@ -71,6 +78,7 @@ export interface FileRoutesByTo {
   '/admin/login': typeof AdminLoginRoute
   '/admin': typeof AdminIndexRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
+  '/api/public/hooks/rfid-clock': typeof ApiPublicHooksRfidClockRoute
   '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
 }
 export interface FileRoutesById {
@@ -81,6 +89,7 @@ export interface FileRoutesById {
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
+  '/api/public/hooks/rfid-clock': typeof ApiPublicHooksRfidClockRoute
   '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
 }
 export interface FileRouteTypes {
@@ -92,6 +101,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/'
     | '/api/public/hooks/absence-check'
+    | '/api/public/hooks/rfid-clock'
     | '/api/public/hooks/sheets-sync'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -101,6 +111,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin'
     | '/api/public/hooks/absence-check'
+    | '/api/public/hooks/rfid-clock'
     | '/api/public/hooks/sheets-sync'
   id:
     | '__root__'
@@ -110,6 +121,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/'
     | '/api/public/hooks/absence-check'
+    | '/api/public/hooks/rfid-clock'
     | '/api/public/hooks/sheets-sync'
   fileRoutesById: FileRoutesById
 }
@@ -120,6 +132,7 @@ export interface RootRouteChildren {
   AdminLoginRoute: typeof AdminLoginRoute
   AdminIndexRoute: typeof AdminIndexRoute
   ApiPublicHooksAbsenceCheckRoute: typeof ApiPublicHooksAbsenceCheckRoute
+  ApiPublicHooksRfidClockRoute: typeof ApiPublicHooksRfidClockRoute
   ApiPublicHooksSheetsSyncRoute: typeof ApiPublicHooksSheetsSyncRoute
 }
 
@@ -167,6 +180,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSheetsSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/rfid-clock': {
+      id: '/api/public/hooks/rfid-clock'
+      path: '/api/public/hooks/rfid-clock'
+      fullPath: '/api/public/hooks/rfid-clock'
+      preLoaderRoute: typeof ApiPublicHooksRfidClockRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/absence-check': {
       id: '/api/public/hooks/absence-check'
       path: '/api/public/hooks/absence-check'
@@ -184,18 +204,9 @@ const rootRouteChildren: RootRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
   AdminIndexRoute: AdminIndexRoute,
   ApiPublicHooksAbsenceCheckRoute: ApiPublicHooksAbsenceCheckRoute,
+  ApiPublicHooksRfidClockRoute: ApiPublicHooksRfidClockRoute,
   ApiPublicHooksSheetsSyncRoute: ApiPublicHooksSheetsSyncRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

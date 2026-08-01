@@ -45,6 +45,7 @@ export function RosterTab() {
     guardian_name: "",
     guardian_email: "",
     student_email: "",
+    rfid_uid: "",
   });
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<Student | null>(null);
@@ -55,6 +56,7 @@ export function RosterTab() {
     guardian_name: "",
     guardian_email: "",
     student_email: "",
+    rfid_uid: "",
   });
   const [savingEdit, setSavingEdit] = useState(false);
 
@@ -96,10 +98,13 @@ export function RosterTab() {
         guardian_name: form.guardian_name || null,
         guardian_email: form.guardian_email || null,
         student_email: form.student_email || null,
+        rfid_uid: form.rfid_uid.trim().toUpperCase() || null,
       });
       if (error) {
         toast.error(
-          error.code === "23505" ? "A student with that ID already exists" : error.message
+          error.code === "23505"
+            ? "That student ID or RFID card is already assigned"
+            : error.message
         );
         return;
       }
@@ -112,6 +117,7 @@ export function RosterTab() {
         guardian_name: "",
         guardian_email: "",
         student_email: "",
+        rfid_uid: "",
       });
       load();
     } finally {
@@ -135,6 +141,7 @@ export function RosterTab() {
       guardian_name: s.guardian_name ?? "",
       guardian_email: s.guardian_email ?? "",
       student_email: s.student_email ?? "",
+      rfid_uid: s.rfid_uid ?? "",
     });
   }
 
@@ -151,10 +158,14 @@ export function RosterTab() {
         guardian_name: editForm.guardian_name || null,
         guardian_email: editForm.guardian_email || null,
         student_email: editForm.student_email || null,
+        rfid_uid: editForm.rfid_uid.trim().toUpperCase() || null,
       })
       .eq("id", editing.id);
     setSavingEdit(false);
-    if (error) return toast.error(error.message);
+    if (error)
+      return toast.error(
+        error.code === "23505" ? "That RFID card is already assigned" : error.message
+      );
     toast.success("Student updated");
     setEditing(null);
     load();
@@ -278,6 +289,15 @@ export function RosterTab() {
                   type="email"
                   value={form.student_email}
                   onChange={(e) => setForm({ ...form, student_email: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>RFID card UID (optional)</Label>
+                <Input
+                  value={form.rfid_uid}
+                  placeholder="e.g. 04A2B3C4"
+                  className="font-mono uppercase"
+                  onChange={(e) => setForm({ ...form, rfid_uid: e.target.value })}
                 />
               </div>
               <Button type="submit" disabled={busy} className="w-full h-11">
@@ -441,6 +461,18 @@ export function RosterTab() {
                   value={editForm.student_email}
                   onChange={(e) => setEditForm({ ...editForm, student_email: e.target.value })}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>RFID card UID</Label>
+                <Input
+                  value={editForm.rfid_uid}
+                  placeholder="Tap the card on a reader to get its UID"
+                  className="font-mono uppercase"
+                  onChange={(e) => setEditForm({ ...editForm, rfid_uid: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Used by the RFID kiosk reader. Leave empty to unassign.
+                </p>
               </div>
               <Button type="submit" disabled={savingEdit} className="w-full h-11">
                 {savingEdit ? "Saving…" : "Save changes"}
