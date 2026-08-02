@@ -23,7 +23,7 @@ import { computeEndDate, generateCohortCode, pickCohortColor } from "@/lib/cohor
 import { format, parseISO } from "date-fns";
 import { useServerFn } from "@tanstack/react-start";
 import { forceCohortStatus, runCohortLifecycleNow } from "@/lib/cohort-lifecycle.functions";
-import { daysRemaining } from "@/lib/cohort-lifecycle.server";
+import { daysRemaining } from "@/lib/cohort-lifecycle";
 import { Textarea } from "@/components/ui/textarea";
 
 const STATUS_LABEL: Record<string, string> = {
