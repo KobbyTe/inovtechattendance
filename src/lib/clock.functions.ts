@@ -151,11 +151,14 @@ export const clockAction = createServerFn({ method: "POST" })
 
     const { data: s, error: sErr } = await supabaseAdmin
       .from("students")
-      .select("student_id, full_name")
+      .select("student_id, full_name, cohort_id")
       .ilike("student_id", data.studentId)
       .maybeSingle();
     if (sErr) throw new Error(sErr.message);
     if (!s) throw new Error("Invalid Student ID");
+
+    const { assertCohortClockable } = await import("./cohort-lifecycle.server");
+    await assertCohortClockable(supabaseAdmin as never, s.cohort_id);
 
     if (data.action === "in") {
       const { error } = await supabaseAdmin.from("attendance").insert({

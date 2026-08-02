@@ -83,6 +83,9 @@ export const kioskClockWithStudentToken = createServerFn({ method: "POST" })
     if (sErr) throw new Error(sErr.message);
     if (!s) throw new Error("Student not found");
 
+    const { assertCohortClockable } = await import("./cohort-lifecycle.server");
+    await assertCohortClockable(supabaseAdmin as never, s.cohort_id);
+
     let cohort: { id: string; name: string; color: string } | null = null;
     if (s.cohort_id) {
       const { data: c } = await supabaseAdmin

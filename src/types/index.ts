@@ -34,4 +34,6 @@ export interface Cohort {
   created_at: string;
   is_ended: boolean;
   ended_at: string | null;
+  status: "upcoming" | "active" | "ended";
+  grace_period_days: number;
 }

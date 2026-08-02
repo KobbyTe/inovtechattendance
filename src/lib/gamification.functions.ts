@@ -23,18 +23,42 @@ export const getStudentGamification = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const from = format(subDays(new Date(), 120), "yyyy-MM-dd");
+
+    // Once a student's cohort has ended, streak/XP are frozen at the end date;
+    // historical data stays fully readable, it just no longer moves.
+    const { data: stu } = await supabaseAdmin
+      .from("students")
+      .select("cohort_id")
+      .ilike("student_id", data.studentId)
+      .maybeSingle();
+    let frozen = false;
+    let asOf = new Date();
+    if (stu?.cohort_id) {
+      const { data: coh } = await supabaseAdmin
+        .from("cohorts")
+        .select("status, is_ended, ended_at, end_date")
+        .eq("id", stu.cohort_id)
+        .maybeSingle();
+      if (coh && (coh.is_ended || coh.status === "ended")) {
+        frozen = true;
+        const stamp = coh.ended_at ?? coh.end_date;
+        if (stamp) asOf = parseISO(stamp);
+      }
+    }
+
+    const from = format(subDays(asOf, 120), "yyyy-MM-dd");
     const { data: rows } = await supabaseAdmin
       .from("attendance")
       .select("date")
       .ilike("student_id", data.studentId)
       .gte("date", from)
+      .lte("date", format(asOf, "yyyy-MM-dd"))
       .order("date", { ascending: false });
     const attended = new Set((rows ?? []).map((r) => r.date));
 
     // Streak: walk back day-by-day through meeting days
     let streak = 0;
-    const cur = new Date();
+    const cur = new Date(asOf);
     for (let i = 0; i < 120; i++) {
       const dow = cur.getDay();
       if (MEETING_DOWS.includes(dow)) {
@@ -46,7 +70,7 @@ export const getStudentGamification = createServerFn({ method: "POST" })
     }
 
     // Perfect weeks: count ISO weeks in last 8 where all past meeting days attended
-    const today = new Date();
+    const today = new Date(asOf);
     today.setHours(0, 0, 0, 0);
     let perfectWeeks = 0;
     for (let w = 0; w < 8; w++) {
@@ -71,6 +95,8 @@ export const getStudentGamification = createServerFn({ method: "POST" })
     const xpForNext = 200;
 
     return {
+      frozen,
+      frozenAt: frozen ? format(asOf, "yyyy-MM-dd") : null,
       streak,
       perfectWeeks,
       totalAttended,
