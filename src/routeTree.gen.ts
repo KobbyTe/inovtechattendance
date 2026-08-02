@@ -9,18 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as KioskRouteImport } from './routes/kiosk'
-import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AttendanceRouteImport } from './routes/attendance'
+import { Route as KioskRouteImport } from './routes/kiosk'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
-import { Route as ApiPublicHooksSheetsSyncRouteImport } from './routes/api/public/hooks/sheets-sync'
-import { Route as ApiPublicHooksRfidClockRouteImport } from './routes/api/public/hooks/rfid-clock'
 import { Route as ApiPublicHooksAbsenceCheckRouteImport } from './routes/api/public/hooks/absence-check'
+import { Route as ApiPublicHooksRfidClockRouteImport } from './routes/api/public/hooks/rfid-clock'
+import { Route as ApiPublicHooksSheetsSyncRouteImport } from './routes/api/public/hooks/sheets-sync'
 
-const KioskRoute = KioskRouteImport.update({
-  id: '/kiosk',
-  path: '/kiosk',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AttendanceRoute = AttendanceRouteImport.update({
@@ -28,9 +28,9 @@ const AttendanceRoute = AttendanceRouteImport.update({
   path: '/attendance',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const KioskRoute = KioskRouteImport.update({
+  id: '/kiosk',
+  path: '/kiosk',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -43,10 +43,10 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/admin/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicHooksSheetsSyncRoute =
-  ApiPublicHooksSheetsSyncRouteImport.update({
-    id: '/api/public/hooks/sheets-sync',
-    path: '/api/public/hooks/sheets-sync',
+const ApiPublicHooksAbsenceCheckRoute =
+  ApiPublicHooksAbsenceCheckRouteImport.update({
+    id: '/api/public/hooks/absence-check',
+    path: '/api/public/hooks/absence-check',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicHooksRfidClockRoute = ApiPublicHooksRfidClockRouteImport.update({
@@ -54,10 +54,10 @@ const ApiPublicHooksRfidClockRoute = ApiPublicHooksRfidClockRouteImport.update({
   path: '/api/public/hooks/rfid-clock',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicHooksAbsenceCheckRoute =
-  ApiPublicHooksAbsenceCheckRouteImport.update({
-    id: '/api/public/hooks/absence-check',
-    path: '/api/public/hooks/absence-check',
+const ApiPublicHooksSheetsSyncRoute =
+  ApiPublicHooksSheetsSyncRouteImport.update({
+    id: '/api/public/hooks/sheets-sync',
+    path: '/api/public/hooks/sheets-sync',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -138,11 +138,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/kiosk': {
-      id: '/kiosk'
-      path: '/kiosk'
-      fullPath: '/kiosk'
-      preLoaderRoute: typeof KioskRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/attendance': {
@@ -152,11 +152,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AttendanceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/kiosk': {
+      id: '/kiosk'
+      path: '/kiosk'
+      fullPath: '/kiosk'
+      preLoaderRoute: typeof KioskRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -173,11 +173,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/sheets-sync': {
-      id: '/api/public/hooks/sheets-sync'
-      path: '/api/public/hooks/sheets-sync'
-      fullPath: '/api/public/hooks/sheets-sync'
-      preLoaderRoute: typeof ApiPublicHooksSheetsSyncRouteImport
+    '/api/public/hooks/absence-check': {
+      id: '/api/public/hooks/absence-check'
+      path: '/api/public/hooks/absence-check'
+      fullPath: '/api/public/hooks/absence-check'
+      preLoaderRoute: typeof ApiPublicHooksAbsenceCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/rfid-clock': {
@@ -187,11 +187,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksRfidClockRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/absence-check': {
-      id: '/api/public/hooks/absence-check'
-      path: '/api/public/hooks/absence-check'
-      fullPath: '/api/public/hooks/absence-check'
-      preLoaderRoute: typeof ApiPublicHooksAbsenceCheckRouteImport
+    '/api/public/hooks/sheets-sync': {
+      id: '/api/public/hooks/sheets-sync'
+      path: '/api/public/hooks/sheets-sync'
+      fullPath: '/api/public/hooks/sheets-sync'
+      preLoaderRoute: typeof ApiPublicHooksSheetsSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
