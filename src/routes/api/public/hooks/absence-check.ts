@@ -78,7 +78,7 @@ export const Route = createFileRoute("/api/public/hooks/absence-check")({
           { data: present, error: aErr },
           { data: existing, error: exErr },
           { data: settings },
-          { data: endedCohorts },
+          { data: allCohorts },
         ] = await Promise.all([
           supabaseAdmin
             .from("students")
@@ -90,7 +90,7 @@ export const Route = createFileRoute("/api/public/hooks/absence-check")({
             .select("email_subject,email_body,email_header_image_url,email_signature")
             .eq("singleton", true)
             .maybeSingle(),
-          supabaseAdmin.from("cohorts").select("id").eq("is_ended", true),
+          supabaseAdmin.from("cohorts").select("id, status, is_ended"),
         ]);
         if (sErr || aErr || exErr) {
           return Response.json(
@@ -101,12 +101,17 @@ export const Route = createFileRoute("/api/public/hooks/absence-check")({
 
         const presentIds = new Set((present ?? []).map((r) => r.student_id));
         const existingIds = new Set((existing ?? []).map((r) => r.student_id));
-        const endedCohortIds = new Set((endedCohorts ?? []).map((c) => c.id));
+        // Only cohorts in the "active" lifecycle state get absence alerts.
+        const inactiveCohortIds = new Set(
+          (allCohorts ?? [])
+            .filter((c) => c.is_ended || c.status !== "active")
+            .map((c) => c.id),
+        );
         const absent = (students ?? []).filter(
           (s) =>
             !presentIds.has(s.student_id) &&
             !existingIds.has(s.student_id) &&
-            !(s.cohort_id && endedCohortIds.has(s.cohort_id)),
+            !(s.cohort_id && inactiveCohortIds.has(s.cohort_id)),
         );
 
         if (absent.length === 0) {
