@@ -21,6 +21,34 @@ import { Archive, Layers, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { computeEndDate, generateCohortCode, pickCohortColor } from "@/lib/cohorts";
 import { format, parseISO } from "date-fns";
+import { useServerFn } from "@tanstack/react-start";
+import { forceCohortStatus, runCohortLifecycleNow } from "@/lib/cohort-lifecycle.functions";
+import { daysRemaining } from "@/lib/cohort-lifecycle.server";
+import { Textarea } from "@/components/ui/textarea";
+
+const STATUS_LABEL: Record<string, string> = {
+  upcoming: "Upcoming",
+  active: "Active",
+  ended: "Ended",
+};
+
+function StatusBadge({ cohort }: { cohort: Cohort }) {
+  const status = cohort.is_ended ? "ended" : (cohort.status ?? "active");
+  const tone =
+    status === "active"
+      ? "bg-primary/15 text-primary"
+      : status === "upcoming"
+        ? "bg-accent/20 text-accent-foreground"
+        : "bg-muted text-muted-foreground";
+  return (
+    <span
+      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${tone}`}
+      style={status === "active" ? { background: `${cohort.color}22`, color: cohort.color } : undefined}
+    >
+      {STATUS_LABEL[status] ?? status}
+    </span>
+  );
+}
 
 type CohortForm = {
   id?: string;
@@ -45,6 +73,12 @@ export function CohortsTab() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<CohortForm>(emptyForm(pickCohortColor(0)));
   const [busy, setBusy] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [override, setOverride] = useState<
+    { cohort: Cohort; next: "active" | "ended"; reason: string } | null
+  >(null);
+  const forceStatus = useServerFn(forceCohortStatus);
+  const runLifecycleFn = useServerFn(runCohortLifecycleNow);
 
   async function load() {
     const [{ data: cs }, { data: ss }] = await Promise.all([
@@ -132,22 +166,45 @@ export function CohortsTab() {
     load();
   }
 
-  async function toggleEnded(c: Cohort) {
-    const ending = !c.is_ended;
-    const { error } = await supabase
-      .from("cohorts")
-      .update({
-        is_ended: ending,
-        ended_at: ending ? format(new Date(), "yyyy-MM-dd") : null,
-      })
-      .eq("id", c.id);
-    if (error) return toast.error(error.message);
-    toast.success(
-      ending
-        ? `${c.name} ended — students will no longer be marked absent.`
-        : `${c.name} reopened — absence tracking resumed.`,
-    );
-    load();
+  async function submitOverride() {
+    if (!override) return;
+    if (override.reason.trim().length < 3) return toast.error("Please give a short reason");
+    setBusy(true);
+    try {
+      const res = await forceStatus({
+        data: {
+          cohortId: override.cohort.id,
+          status: override.next,
+          reason: override.reason.trim(),
+        },
+      });
+      toast.success(
+        override.next === "ended"
+          ? `${override.cohort.name} ended${res.yearbookGenerated ? " — yearbook generated" : ""}.`
+          : `${override.cohort.name} reopened — tracking resumed.`,
+      );
+      setOverride(null);
+      load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to update status");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function runLifecycle() {
+    setSyncing(true);
+    try {
+      const r = await runLifecycleFn({});
+      toast.success(
+        `Checked ${r.checked} cohort(s) · ${r.transitions.length} status change(s) · ${r.yearbooksGenerated} yearbook(s) generated`,
+      );
+      load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Lifecycle run failed");
+    } finally {
+      setSyncing(false);
+    }
   }
 
   return (
@@ -157,6 +214,11 @@ export function CohortsTab() {
           <h2 className="text-lg font-semibold">Cohorts</h2>
           <p className="text-sm text-muted-foreground">Group students by class or program.</p>
         </div>
+        <div className="flex items-center gap-2">
+        <Button variant="outline" className="h-11" onClick={runLifecycle} disabled={syncing}>
+          <RotateCcw className={`mr-1 h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+          {syncing ? "Checking…" : "Run status check"}
+        </Button>
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
             <Button onClick={openNew} className="h-11">
@@ -249,6 +311,7 @@ export function CohortsTab() {
             </form>
           </SheetContent>
         </Sheet>
+        </div>
       </div>
 
       {cohorts.length === 0 ? (
@@ -271,11 +334,7 @@ export function CohortsTab() {
                       style={{ background: c.color }}
                     />
                     <h3 className="font-semibold truncate">{c.name}</h3>
-                    {c.is_ended && (
-                      <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        Ended
-                      </span>
-                    )}
+                    <StatusBadge cohort={c} />
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground font-mono">{c.code}</p>
                 </div>
@@ -284,7 +343,9 @@ export function CohortsTab() {
                     variant="ghost"
                     size="icon"
                     title={c.is_ended ? "Reopen cohort" : "End cohort"}
-                    onClick={() => toggleEnded(c)}
+                    onClick={() =>
+                      setOverride({ cohort: c, next: c.is_ended ? "active" : "ended", reason: "" })
+                    }
                   >
                     {c.is_ended ? <RotateCcw className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
                   </Button>
@@ -323,6 +384,16 @@ export function CohortsTab() {
                   <dt className="text-muted-foreground">Students</dt>
                   <dd className="font-medium">{counts[c.id] ?? 0}</dd>
                 </div>
+                {!c.is_ended && (c.status ?? "active") === "active" && daysRemaining(c) !== null && (
+                  <div>
+                    <dt className="text-muted-foreground">Remaining</dt>
+                    <dd className="font-medium">
+                      {daysRemaining(c)! >= 0
+                        ? `${daysRemaining(c)} days remaining`
+                        : `In grace period (${Math.abs(daysRemaining(c)!)}d past end)`}
+                    </dd>
+                  </div>
+                )}
                 {c.start_date && (
                   <div>
                     <dt className="text-muted-foreground">Start</dt>
@@ -346,6 +417,38 @@ export function CohortsTab() {
           ))}
         </div>
       )}
+
+      <AlertDialog open={!!override} onOpenChange={(o) => !o && setOverride(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {override?.next === "ended"
+                ? `Force-end ${override?.cohort.name}?`
+                : `Reopen ${override?.cohort.name}?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Advanced action. Status is normally computed automatically from the cohort dates and
+              grace period. This override is logged with your account and reason.
+              {override?.next === "ended"
+                ? " Ending stops clock-ins, absence alerts and streak updates, and generates the yearbook."
+                : " Reopening resumes clock-ins, absence alerts and streak updates."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Textarea
+            placeholder="Reason (e.g. program finished two weeks early)"
+            value={override?.reason ?? ""}
+            onChange={(e) =>
+              setOverride((o) => (o ? { ...o, reason: e.target.value } : o))
+            }
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction disabled={busy} onClick={(e) => { e.preventDefault(); submitOverride(); }}>
+              {busy ? "Saving…" : override?.next === "ended" ? "Force-end cohort" : "Reopen cohort"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
