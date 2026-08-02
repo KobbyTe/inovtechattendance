@@ -96,8 +96,17 @@ export function WeeklybookTab() {
 
   const accent = useMemo(() => data?.cohort.color || "#6366F1", [data]);
 
+  const activeCohort = cohorts.find((c) => c.id === selected);
+  const cohortEnded = !!activeCohort && (activeCohort.is_ended || activeCohort.status === "ended");
+
   return (
     <div className="space-y-5">
+      {cohortEnded && (
+        <div className="rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
+          <span className="font-semibold text-foreground">{activeCohort?.name} has ended.</span>{" "}
+          Weekly recaps are no longer generated — the Yearbook is the final artifact for this cohort.
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-3 justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground">Weeklybook</h1>
