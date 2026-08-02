@@ -46,6 +46,10 @@ type Stage =
       attendanceId?: string | null;
     };
 
+function isCohortStateMessage(msg: string) {
+  return msg.includes("cohort has ended") || msg.includes("hasn't started yet");
+}
+
 function KioskPage() {
   const search = Route.useSearch();
   const [stage, setStage] = useState<Stage>({ kind: "scanning" });
@@ -174,11 +178,9 @@ function KioskPage() {
         setTimeout(() => setStage({ kind: "scanning" }), 6500);
       }
     } catch (e) {
-      setStage({
-        kind: "invalid",
-        reason: e instanceof Error ? e.message : "Could not clock in",
-      });
-      setTimeout(() => setStage({ kind: "scanning" }), 2800);
+      const msg = e instanceof Error ? e.message : "Could not clock in";
+      setStage({ kind: "invalid", reason: msg });
+      setTimeout(() => setStage({ kind: "scanning" }), isCohortStateMessage(msg) ? 7000 : 2800);
     }
   }
 
@@ -260,7 +262,14 @@ function KioskPage() {
         setTimeout(() => setStage({ kind: "scanning" }), 6500);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not clock in.");
+      const msg = e instanceof Error ? e.message : "Could not clock in.";
+      if (isCohortStateMessage(msg)) {
+        setIdInput("");
+        setStage({ kind: "invalid", reason: msg });
+        setTimeout(() => setStage({ kind: "scanning" }), 7000);
+      } else {
+        setError(msg);
+      }
     } finally {
       setBusy(false);
     }
