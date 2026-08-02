@@ -78,8 +78,11 @@ export const Route = createFileRoute("/api/public/hooks/absence-check")({
           { data: present, error: aErr },
           { data: existing, error: exErr },
           { data: settings },
+          { data: endedCohorts },
         ] = await Promise.all([
-          supabaseAdmin.from("students").select("student_id, full_name, guardian_name, guardian_email"),
+          supabaseAdmin
+            .from("students")
+            .select("student_id, full_name, guardian_name, guardian_email, cohort_id"),
           supabaseAdmin.from("attendance").select("student_id").eq("date", date),
           supabaseAdmin.from("absences").select("student_id").eq("date", date),
           supabaseAdmin
@@ -87,6 +90,7 @@ export const Route = createFileRoute("/api/public/hooks/absence-check")({
             .select("email_subject,email_body,email_header_image_url,email_signature")
             .eq("singleton", true)
             .maybeSingle(),
+          supabaseAdmin.from("cohorts").select("id").eq("is_ended", true),
         ]);
         if (sErr || aErr || exErr) {
           return Response.json(
@@ -97,8 +101,12 @@ export const Route = createFileRoute("/api/public/hooks/absence-check")({
 
         const presentIds = new Set((present ?? []).map((r) => r.student_id));
         const existingIds = new Set((existing ?? []).map((r) => r.student_id));
+        const endedCohortIds = new Set((endedCohorts ?? []).map((c) => c.id));
         const absent = (students ?? []).filter(
-          (s) => !presentIds.has(s.student_id) && !existingIds.has(s.student_id),
+          (s) =>
+            !presentIds.has(s.student_id) &&
+            !existingIds.has(s.student_id) &&
+            !(s.cohort_id && endedCohortIds.has(s.cohort_id)),
         );
 
         if (absent.length === 0) {

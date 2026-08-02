@@ -17,7 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Layers, Pencil, Plus, Trash2 } from "lucide-react";
+import { Archive, Layers, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { computeEndDate, generateCohortCode, pickCohortColor } from "@/lib/cohorts";
 import { format, parseISO } from "date-fns";
@@ -132,6 +132,24 @@ export function CohortsTab() {
     load();
   }
 
+  async function toggleEnded(c: Cohort) {
+    const ending = !c.is_ended;
+    const { error } = await supabase
+      .from("cohorts")
+      .update({
+        is_ended: ending,
+        ended_at: ending ? format(new Date(), "yyyy-MM-dd") : null,
+      })
+      .eq("id", c.id);
+    if (error) return toast.error(error.message);
+    toast.success(
+      ending
+        ? `${c.name} ended — students will no longer be marked absent.`
+        : `${c.name} reopened — absence tracking resumed.`,
+    );
+    load();
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -241,7 +259,10 @@ export function CohortsTab() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {cohorts.map((c) => (
-            <div key={c.id} className="rounded-xl border border-border bg-card p-4">
+            <div
+              key={c.id}
+              className={`rounded-xl border border-border bg-card p-4 ${c.is_ended ? "opacity-70" : ""}`}
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
@@ -250,10 +271,23 @@ export function CohortsTab() {
                       style={{ background: c.color }}
                     />
                     <h3 className="font-semibold truncate">{c.name}</h3>
+                    {c.is_ended && (
+                      <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        Ended
+                      </span>
+                    )}
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground font-mono">{c.code}</p>
                 </div>
                 <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title={c.is_ended ? "Reopen cohort" : "End cohort"}
+                    onClick={() => toggleEnded(c)}
+                  >
+                    {c.is_ended ? <RotateCcw className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+                  </Button>
                   <Button variant="ghost" size="icon" onClick={() => openEdit(c)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -299,6 +333,12 @@ export function CohortsTab() {
                   <div>
                     <dt className="text-muted-foreground">End</dt>
                     <dd className="font-medium">{format(parseISO(c.end_date), "MMM d, yyyy")}</dd>
+                  </div>
+                )}
+                {c.ended_at && (
+                  <div>
+                    <dt className="text-muted-foreground">Ended on</dt>
+                    <dd className="font-medium">{format(parseISO(c.ended_at), "MMM d, yyyy")}</dd>
                   </div>
                 )}
               </dl>

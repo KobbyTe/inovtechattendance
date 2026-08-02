@@ -51,19 +51,31 @@ export const Route = createFileRoute("/api/public/hooks/rfid-clock")({
         const now = new Date();
         const today = format(now, "yyyy-MM-dd");
 
-        const { data: open } = await supabaseAdmin
+        // Today's row for this student (server local day), if any
+        const { data: todayRows, error: tErr } = await supabaseAdmin
           .from("attendance")
-          .select("id")
+          .select("id, clock_out")
           .eq("student_id", student.student_id)
-          .is("clock_out", null)
+          .eq("date", today)
           .order("clock_in", { ascending: false })
-          .maybeSingle();
+          .limit(1);
+        if (tErr) return Response.json({ status: "error" }, { status: 500 });
+        const todayRow = todayRows?.[0] ?? null;
 
-        if (open) {
+        if (todayRow) {
+          // Already completed a full in/out cycle today — do nothing.
+          if (todayRow.clock_out) {
+            return Response.json({
+              status: "already_completed",
+              student_name: student.full_name,
+              device_id: parsed.device_id,
+            });
+          }
           const { error } = await supabaseAdmin
             .from("attendance")
             .update({ clock_out: now.toISOString() })
-            .eq("id", open.id);
+            .eq("id", todayRow.id)
+            .is("clock_out", null);
           if (error) return Response.json({ status: "error" }, { status: 500 });
           return Response.json({
             status: "clocked_out",

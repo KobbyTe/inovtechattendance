@@ -163,7 +163,9 @@ export type Database = {
           created_at: string
           duration_weeks: number | null
           end_date: string | null
+          ended_at: string | null
           id: string
+          is_ended: boolean
           is_ongoing: boolean
           name: string
           start_date: string | null
@@ -174,7 +176,9 @@ export type Database = {
           created_at?: string
           duration_weeks?: number | null
           end_date?: string | null
+          ended_at?: string | null
           id?: string
+          is_ended?: boolean
           is_ongoing?: boolean
           name: string
           start_date?: string | null
@@ -185,7 +189,9 @@ export type Database = {
           created_at?: string
           duration_weeks?: number | null
           end_date?: string | null
+          ended_at?: string | null
           id?: string
+          is_ended?: boolean
           is_ongoing?: boolean
           name?: string
           start_date?: string | null

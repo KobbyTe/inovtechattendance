@@ -32,4 +32,6 @@ export interface Cohort {
   is_ongoing: boolean;
   color: string;
   created_at: string;
+  is_ended: boolean;
+  ended_at: string | null;
 }
