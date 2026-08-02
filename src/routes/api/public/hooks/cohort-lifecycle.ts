@@ -14,7 +14,8 @@ export const Route = createFileRoute("/api/public/hooks/cohort-lifecycle")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const secret = process.env["RFID_WEBHOOK_SECRET"];
+        const secret =
+          process.env["COHORT_CRON_SECRET"] ?? process.env["RFID_WEBHOOK_SECRET"];
         if (!secret) return Response.json({ ok: false, error: "misconfigured" }, { status: 500 });
 
         const rawBody = await request.text();
