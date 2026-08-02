@@ -17,7 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Layers, Pencil, Plus, Trash2 } from "lucide-react";
+import { CircleСheckPlaceholder, Layers, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { computeEndDate, generateCohortCode, pickCohortColor } from "@/lib/cohorts";
 import { format, parseISO } from "date-fns";
