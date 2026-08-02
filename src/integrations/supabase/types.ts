@@ -156,6 +156,76 @@ export type Database = {
           },
         ]
       }
+      cohort_status_overrides: {
+        Row: {
+          admin_user_id: string
+          cohort_id: string
+          created_at: string
+          from_status: string
+          id: string
+          reason: string
+          to_status: string
+        }
+        Insert: {
+          admin_user_id: string
+          cohort_id: string
+          created_at?: string
+          from_status: string
+          id?: string
+          reason: string
+          to_status: string
+        }
+        Update: {
+          admin_user_id?: string
+          cohort_id?: string
+          created_at?: string
+          from_status?: string
+          id?: string
+          reason?: string
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cohort_status_overrides_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cohort_yearbooks: {
+        Row: {
+          cohort_id: string
+          created_at: string
+          generated_at: string
+          id: string
+          snapshot: Json
+        }
+        Insert: {
+          cohort_id: string
+          created_at?: string
+          generated_at?: string
+          id?: string
+          snapshot?: Json
+        }
+        Update: {
+          cohort_id?: string
+          created_at?: string
+          generated_at?: string
+          id?: string
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cohort_yearbooks_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: true
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cohorts: {
         Row: {
           code: string
@@ -164,11 +234,13 @@ export type Database = {
           duration_weeks: number | null
           end_date: string | null
           ended_at: string | null
+          grace_period_days: number
           id: string
           is_ended: boolean
           is_ongoing: boolean
           name: string
           start_date: string | null
+          status: string
         }
         Insert: {
           code: string
@@ -177,11 +249,13 @@ export type Database = {
           duration_weeks?: number | null
           end_date?: string | null
           ended_at?: string | null
+          grace_period_days?: number
           id?: string
           is_ended?: boolean
           is_ongoing?: boolean
           name: string
           start_date?: string | null
+          status?: string
         }
         Update: {
           code?: string
@@ -190,11 +264,13 @@ export type Database = {
           duration_weeks?: number | null
           end_date?: string | null
           ended_at?: string | null
+          grace_period_days?: number
           id?: string
           is_ended?: boolean
           is_ongoing?: boolean
           name?: string
           start_date?: string | null
+          status?: string
         }
         Relationships: []
       }
