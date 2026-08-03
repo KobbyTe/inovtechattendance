@@ -82,12 +82,16 @@ export const Route = createFileRoute("/api/public/hooks/absence-check")({
         ] = await Promise.all([
           supabaseAdmin
             .from("students")
-            .select("student_id, full_name, guardian_name, guardian_email, cohort_id"),
+            .select(
+              "student_id, full_name, guardian_name, guardian_email, guardian_phone, guardian_msg_opt_out, cohort_id",
+            ),
           supabaseAdmin.from("attendance").select("student_id").eq("date", date),
           supabaseAdmin.from("absences").select("student_id").eq("date", date),
           supabaseAdmin
             .from("app_settings")
-            .select("email_subject,email_body,email_header_image_url,email_signature")
+            .select(
+              "email_subject,email_body,email_header_image_url,email_signature,sms_enabled,whatsapp_enabled,sms_sender_id,absence_sms_template,whatsapp_template_name,whatsapp_template_lang",
+            )
             .eq("singleton", true)
             .maybeSingle(),
           supabaseAdmin.from("cohorts").select("id, status, is_ended"),
@@ -150,6 +154,29 @@ export const Route = createFileRoute("/api/public/hooks/absence-check")({
           .filter((r) => "ok" in r && r.ok === false)
           .map((r) => ("error" in r ? r.error : ""));
 
+        // Guardian SMS / WhatsApp alerts (best-effort, logged per attempt)
+        const { notifyGuardianAbsence } = await import("@/lib/messaging.server");
+        const msgResults = await Promise.all(
+          absent.map((s) =>
+            notifyGuardianAbsence(supabaseAdmin, {
+              studentId: s.student_id,
+              studentName: s.full_name,
+              guardianName: s.guardian_name,
+              guardianPhone: s.guardian_phone,
+              optOut: s.guardian_msg_opt_out,
+              dayName,
+              date,
+              settings: settings ?? {},
+            }),
+          ),
+        );
+        const countOk = (k: "sms" | "whatsapp") =>
+          msgResults.filter((r) => r[k] && "ok" in r[k]! && r[k]!.ok === true).length;
+        const msgErrors = msgResults
+          .flatMap((r) => [r.sms, r.whatsapp])
+          .filter((r): r is { ok: false; error: string } => !!r && "error" in r)
+          .map((r) => r.error);
+
         return Response.json({
           ok: true,
           date,
@@ -157,6 +184,9 @@ export const Route = createFileRoute("/api/public/hooks/absence-check")({
           inserted: rows.length,
           emailed,
           emailErrors: emailErrors.slice(0, 5),
+          smsSent: countOk("sms"),
+          whatsappSent: countOk("whatsapp"),
+          messagingErrors: msgErrors.slice(0, 5),
         });
       },
     },

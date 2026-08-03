@@ -44,6 +44,8 @@ export function RosterTab() {
     cohort_id: "",
     guardian_name: "",
     guardian_email: "",
+    guardian_phone: "",
+    guardian_msg_opt_out: false,
     student_email: "",
     rfid_uid: "",
   });
@@ -55,6 +57,8 @@ export function RosterTab() {
     cohort_id: "",
     guardian_name: "",
     guardian_email: "",
+    guardian_phone: "",
+    guardian_msg_opt_out: false,
     student_email: "",
     rfid_uid: "",
   });
@@ -97,6 +101,8 @@ export function RosterTab() {
         cohort_id: form.cohort_id,
         guardian_name: form.guardian_name || null,
         guardian_email: form.guardian_email || null,
+        guardian_phone: form.guardian_phone || null,
+        guardian_msg_opt_out: form.guardian_msg_opt_out,
         student_email: form.student_email || null,
         rfid_uid: form.rfid_uid.trim().toUpperCase() || null,
       });
@@ -116,6 +122,8 @@ export function RosterTab() {
         cohort_id: "",
         guardian_name: "",
         guardian_email: "",
+        guardian_phone: "",
+        guardian_msg_opt_out: false,
         student_email: "",
         rfid_uid: "",
       });
@@ -140,6 +148,8 @@ export function RosterTab() {
       cohort_id: s.cohort_id ?? "",
       guardian_name: s.guardian_name ?? "",
       guardian_email: s.guardian_email ?? "",
+      guardian_phone: s.guardian_phone ?? "",
+      guardian_msg_opt_out: s.guardian_msg_opt_out ?? false,
       student_email: s.student_email ?? "",
       rfid_uid: s.rfid_uid ?? "",
     });
@@ -157,6 +167,8 @@ export function RosterTab() {
         cohort_id: editForm.cohort_id || null,
         guardian_name: editForm.guardian_name || null,
         guardian_email: editForm.guardian_email || null,
+        guardian_phone: editForm.guardian_phone || null,
+        guardian_msg_opt_out: editForm.guardian_msg_opt_out,
         student_email: editForm.student_email || null,
         rfid_uid: editForm.rfid_uid.trim().toUpperCase() || null,
       })
@@ -281,6 +293,15 @@ export function RosterTab() {
                   type="email"
                   value={form.guardian_email}
                   onChange={(e) => setForm({ ...form, guardian_email: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Guardian / Parent phone (SMS &amp; WhatsApp)</Label>
+                <Input
+                  type="tel"
+                  placeholder="024 123 4567 or +233241234567"
+                  value={form.guardian_phone}
+                  onChange={(e) => setForm({ ...form, guardian_phone: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
@@ -454,6 +475,26 @@ export function RosterTab() {
                   onChange={(e) => setEditForm({ ...editForm, guardian_email: e.target.value })}
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Guardian / Parent phone (SMS &amp; WhatsApp)</Label>
+                <Input
+                  type="tel"
+                  placeholder="024 123 4567 or +233241234567"
+                  value={editForm.guardian_phone}
+                  onChange={(e) => setEditForm({ ...editForm, guardian_phone: e.target.value })}
+                />
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-primary"
+                  checked={editForm.guardian_msg_opt_out}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, guardian_msg_opt_out: e.target.checked })
+                  }
+                />
+                Do not send SMS / WhatsApp to this guardian
+              </label>
               <div className="space-y-2">
                 <Label>Student email</Label>
                 <Input

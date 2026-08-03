@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { syncToGoogleSheets } from "@/lib/sheets.functions";
-import { ExternalLink, ImagePlus, Mail, RefreshCw, Sheet, Trash2 } from "lucide-react";
+import { sendTestGuardianMessage } from "@/lib/messaging.functions";
+import { ExternalLink, ImagePlus, Mail, MessageSquare, RefreshCw, Sheet, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 function extractSheetId(input: string): string {
@@ -73,6 +74,21 @@ export function SettingsTab() {
     clockout_guardian_subject: CLOCK_DEFAULTS.clockout_guardian.subject,
     clockout_guardian_body: CLOCK_DEFAULTS.clockout_guardian.body,
   });
+  const DEFAULT_SMS =
+    "Hi {{guardianName}}, {{studentName}} was not marked present at Inovtech STEM Center on {{dayName}}, {{date}}. Please contact the program team if unexpected.";
+  const [msg, setMsg] = useState({
+    sms_enabled: false,
+    whatsapp_enabled: false,
+    sms_sender_id: "Inovtech",
+    absence_sms_template: DEFAULT_SMS,
+    whatsapp_template_name: "",
+    whatsapp_template_lang: "en",
+  });
+  const [savingMsg, setSavingMsg] = useState(false);
+  const [testPhone, setTestPhone] = useState("");
+  const [testing, setTesting] = useState<"sms" | "whatsapp" | null>(null);
+  const testMsgFn = useServerFn(sendTestGuardianMessage);
+
   const [savingTpl, setSavingTpl] = useState(false);
   const [savingClock, setSavingClock] = useState(false);
   const [uploadingHeader, setUploadingHeader] = useState(false);
@@ -82,7 +98,7 @@ export function SettingsTab() {
     supabase
       .from("app_settings")
       .select(
-        "google_sheet_id,last_sheets_sync_at,email_subject,email_body,email_header_image_url,email_signature,clockin_student_subject,clockin_student_body,clockin_guardian_subject,clockin_guardian_body,clockout_student_subject,clockout_student_body,clockout_guardian_subject,clockout_guardian_body",
+        "google_sheet_id,last_sheets_sync_at,email_subject,email_body,email_header_image_url,email_signature,clockin_student_subject,clockin_student_body,clockin_guardian_subject,clockin_guardian_body,clockout_student_subject,clockout_student_body,clockout_guardian_subject,clockout_guardian_body,sms_enabled,whatsapp_enabled,sms_sender_id,absence_sms_template,whatsapp_template_name,whatsapp_template_lang",
       )
       .eq("singleton", true)
       .maybeSingle()
@@ -97,6 +113,14 @@ export function SettingsTab() {
         if (data?.email_header_image_url) setEmailHeaderImageUrl(data.email_header_image_url);
         if (data?.email_signature) setEmailSignature(data.email_signature);
         if (data) {
+          setMsg((prev) => ({
+            sms_enabled: data.sms_enabled ?? prev.sms_enabled,
+            whatsapp_enabled: data.whatsapp_enabled ?? prev.whatsapp_enabled,
+            sms_sender_id: data.sms_sender_id ?? prev.sms_sender_id,
+            absence_sms_template: data.absence_sms_template ?? prev.absence_sms_template,
+            whatsapp_template_name: data.whatsapp_template_name ?? prev.whatsapp_template_name,
+            whatsapp_template_lang: data.whatsapp_template_lang ?? prev.whatsapp_template_lang,
+          }));
           setClockTpl((prev) => ({
             clockin_student_subject: data.clockin_student_subject ?? prev.clockin_student_subject,
             clockin_student_body: data.clockin_student_body ?? prev.clockin_student_body,
@@ -200,6 +224,48 @@ export function SettingsTab() {
       clockout_guardian_subject: CLOCK_DEFAULTS.clockout_guardian.subject,
       clockout_guardian_body: CLOCK_DEFAULTS.clockout_guardian.body,
     });
+  }
+
+  async function saveMessaging() {
+    setSavingMsg(true);
+    const { data: existing } = await supabase
+      .from("app_settings")
+      .select("id")
+      .eq("singleton", true)
+      .maybeSingle();
+    const payload = {
+      singleton: true,
+      ...msg,
+      sms_sender_id: msg.sms_sender_id.trim() || null,
+      whatsapp_template_name: msg.whatsapp_template_name.trim() || null,
+      whatsapp_template_lang: msg.whatsapp_template_lang.trim() || "en",
+      updated_at: new Date().toISOString(),
+    };
+    const { error } = existing
+      ? await supabase.from("app_settings").update(payload).eq("id", existing.id)
+      : await supabase.from("app_settings").insert(payload);
+    setSavingMsg(false);
+    if (error) return toast.error(error.message);
+    toast.success("SMS / WhatsApp settings saved");
+  }
+
+  async function sendTest(channel: "sms" | "whatsapp") {
+    if (!testPhone.trim()) return toast.error("Enter a phone number to test");
+    setTesting(channel);
+    try {
+      const res = await testMsgFn({ data: { channel, phone: testPhone.trim() } });
+      if (res.ok) toast.success(`Test ${channel === "sms" ? "SMS" : "WhatsApp"} sent to ${res.to}`);
+      else
+        toast.error(
+          "needsCredentials" in res && res.needsCredentials
+            ? `Provider not connected yet — ${res.error}`
+            : res.error,
+        );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Test failed");
+    } finally {
+      setTesting(null);
+    }
   }
 
   async function handleHeaderFile(file: File) {
@@ -398,6 +464,120 @@ export function SettingsTab() {
             <Button variant="outline" onClick={resetClockTemplates} className="h-11">
               Reset to defaults
             </Button>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-xl bg-card border border-border p-5">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="h-5 w-5 text-primary" />
+          <h3 className="text-base font-semibold">Guardian SMS &amp; WhatsApp alerts</h3>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1">
+          Send absence alerts to guardian phone numbers alongside email. SMS goes out through
+          Arkesel; WhatsApp through the Meta Cloud API using an approved template.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-1.5 text-xs">
+          {["{{guardianName}}", "{{studentName}}", "{{dayName}}", "{{date}}"].map((t) => (
+            <code key={t} className="rounded bg-muted px-1.5 py-0.5 font-mono">{t}</code>
+          ))}
+        </div>
+        <div className="space-y-4 mt-4">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-primary"
+              checked={msg.sms_enabled}
+              onChange={(e) => setMsg({ ...msg, sms_enabled: e.target.checked })}
+            />
+            Enable SMS absence alerts (Arkesel)
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-primary"
+              checked={msg.whatsapp_enabled}
+              onChange={(e) => setMsg({ ...msg, whatsapp_enabled: e.target.checked })}
+            />
+            Enable WhatsApp absence alerts (Meta)
+          </label>
+          <div className="space-y-2">
+            <Label>SMS sender ID</Label>
+            <Input
+              value={msg.sms_sender_id}
+              maxLength={11}
+              onChange={(e) => setMsg({ ...msg, sms_sender_id: e.target.value })}
+              className="h-11"
+            />
+            <p className="text-xs text-muted-foreground">
+              Max 11 characters, must be approved with Arkesel.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label>Absence message</Label>
+            <Textarea
+              value={msg.absence_sms_template}
+              onChange={(e) => setMsg({ ...msg, absence_sms_template: e.target.value })}
+              rows={4}
+            />
+            <p className="text-xs text-muted-foreground">
+              {msg.absence_sms_template.length} characters — SMS is billed per 160 characters.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>WhatsApp template name</Label>
+              <Input
+                value={msg.whatsapp_template_name}
+                placeholder="absence_notice"
+                onChange={(e) => setMsg({ ...msg, whatsapp_template_name: e.target.value })}
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Template language</Label>
+              <Input
+                value={msg.whatsapp_template_lang}
+                placeholder="en"
+                onChange={(e) => setMsg({ ...msg, whatsapp_template_lang: e.target.value })}
+                className="h-11"
+              />
+            </div>
+          </div>
+          <Button onClick={saveMessaging} disabled={savingMsg} className="h-11">
+            {savingMsg ? "Saving…" : "Save messaging settings"}
+          </Button>
+          <div className="rounded-lg border border-border p-4 space-y-3 bg-muted/30">
+            <h4 className="text-sm font-semibold">Send a test message</h4>
+            <Input
+              type="tel"
+              value={testPhone}
+              placeholder="024 123 4567"
+              onChange={(e) => setTestPhone(e.target.value)}
+              className="h-11"
+            />
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                className="h-11"
+                disabled={testing !== null}
+                onClick={() => sendTest("sms")}
+              >
+                {testing === "sms" ? "Sending…" : "Test SMS"}
+              </Button>
+              <Button
+                variant="outline"
+                className="h-11"
+                disabled={testing !== null}
+                onClick={() => sendTest("whatsapp")}
+              >
+                {testing === "whatsapp" ? "Sending…" : "Test WhatsApp"}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Needs the Arkesel API key (SMS) and Meta WhatsApp token + phone number ID. Until
+              those are added, alerts are skipped and logged instead of failing the absence run.
+            </p>
           </div>
         </div>
       </section>
