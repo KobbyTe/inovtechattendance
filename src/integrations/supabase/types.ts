@@ -51,6 +51,7 @@ export type Database = {
       }
       app_settings: {
         Row: {
+          absence_sms_template: string | null
           clockin_guardian_body: string | null
           clockin_guardian_subject: string | null
           clockin_student_body: string | null
@@ -68,9 +69,15 @@ export type Database = {
           id: string
           last_sheets_sync_at: string | null
           singleton: boolean
+          sms_enabled: boolean
+          sms_sender_id: string | null
           updated_at: string
+          whatsapp_enabled: boolean
+          whatsapp_template_lang: string
+          whatsapp_template_name: string | null
         }
         Insert: {
+          absence_sms_template?: string | null
           clockin_guardian_body?: string | null
           clockin_guardian_subject?: string | null
           clockin_student_body?: string | null
@@ -88,9 +95,15 @@ export type Database = {
           id?: string
           last_sheets_sync_at?: string | null
           singleton?: boolean
+          sms_enabled?: boolean
+          sms_sender_id?: string | null
           updated_at?: string
+          whatsapp_enabled?: boolean
+          whatsapp_template_lang?: string
+          whatsapp_template_name?: string | null
         }
         Update: {
+          absence_sms_template?: string | null
           clockin_guardian_body?: string | null
           clockin_guardian_subject?: string | null
           clockin_student_body?: string | null
@@ -108,7 +121,12 @@ export type Database = {
           id?: string
           last_sheets_sync_at?: string | null
           singleton?: boolean
+          sms_enabled?: boolean
+          sms_sender_id?: string | null
           updated_at?: string
+          whatsapp_enabled?: boolean
+          whatsapp_template_lang?: string
+          whatsapp_template_name?: string | null
         }
         Relationships: []
       }
@@ -274,6 +292,57 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_log: {
+        Row: {
+          body: string | null
+          channel: string
+          created_at: string
+          date: string | null
+          error: string | null
+          id: string
+          kind: string
+          provider: string
+          provider_message_id: string | null
+          recipient: string
+          sent_at: string | null
+          status: string
+          student_id: string | null
+          student_name: string | null
+        }
+        Insert: {
+          body?: string | null
+          channel: string
+          created_at?: string
+          date?: string | null
+          error?: string | null
+          id?: string
+          kind?: string
+          provider: string
+          provider_message_id?: string | null
+          recipient: string
+          sent_at?: string | null
+          status?: string
+          student_id?: string | null
+          student_name?: string | null
+        }
+        Update: {
+          body?: string | null
+          channel?: string
+          created_at?: string
+          date?: string | null
+          error?: string | null
+          id?: string
+          kind?: string
+          provider?: string
+          provider_message_id?: string | null
+          recipient?: string
+          sent_at?: string | null
+          status?: string
+          student_id?: string | null
+          student_name?: string | null
+        }
+        Relationships: []
+      }
       session_reviews: {
         Row: {
           achievements: string | null
@@ -352,7 +421,9 @@ export type Database = {
           created_at: string
           full_name: string
           guardian_email: string | null
+          guardian_msg_opt_out: boolean
           guardian_name: string | null
+          guardian_phone: string | null
           id: string
           rfid_uid: string | null
           student_email: string | null
@@ -364,7 +435,9 @@ export type Database = {
           created_at?: string
           full_name: string
           guardian_email?: string | null
+          guardian_msg_opt_out?: boolean
           guardian_name?: string | null
+          guardian_phone?: string | null
           id?: string
           rfid_uid?: string | null
           student_email?: string | null
@@ -376,7 +449,9 @@ export type Database = {
           created_at?: string
           full_name?: string
           guardian_email?: string | null
+          guardian_msg_opt_out?: boolean
           guardian_name?: string | null
+          guardian_phone?: string | null
           id?: string
           rfid_uid?: string | null
           student_email?: string | null
