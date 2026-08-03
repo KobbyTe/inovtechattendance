@@ -98,7 +98,7 @@ export function SettingsTab() {
     supabase
       .from("app_settings")
       .select(
-        "google_sheet_id,last_sheets_sync_at,email_subject,email_body,email_header_image_url,email_signature,clockin_student_subject,clockin_student_body,clockin_guardian_subject,clockin_guardian_body,clockout_student_subject,clockout_student_body,clockout_guardian_subject,clockout_guardian_body",
+        "google_sheet_id,last_sheets_sync_at,email_subject,email_body,email_header_image_url,email_signature,clockin_student_subject,clockin_student_body,clockin_guardian_subject,clockin_guardian_body,clockout_student_subject,clockout_student_body,clockout_guardian_subject,clockout_guardian_body,sms_enabled,whatsapp_enabled,sms_sender_id,absence_sms_template,whatsapp_template_name,whatsapp_template_lang",
       )
       .eq("singleton", true)
       .maybeSingle()
