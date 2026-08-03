@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
-import { CalendarX, RefreshCw } from "lucide-react";
+import { CalendarX, MessageSquare, RefreshCw } from "lucide-react";
 import { initials } from "@/lib/attendance";
 import type { Cohort, Student } from "@/types";
 import { CohortBadge } from "@/components/admin/RosterTab";
@@ -17,21 +17,39 @@ interface Absence {
   created_at: string;
 }
 
+interface NotificationRow {
+  id: string;
+  student_name: string | null;
+  channel: string;
+  recipient: string;
+  status: string;
+  error: string | null;
+  date: string | null;
+  created_at: string;
+}
+
 export function AbsencesTab() {
   const [rows, setRows] = useState<Absence[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [cohorts, setCohorts] = useState<Cohort[]>([]);
   const [running, setRunning] = useState(false);
+  const [logs, setLogs] = useState<NotificationRow[]>([]);
 
   async function load() {
-    const [{ data: a }, { data: s }, { data: c }] = await Promise.all([
+    const [{ data: a }, { data: s }, { data: c }, { data: n }] = await Promise.all([
       supabase.from("absences").select("*").order("date", { ascending: false }),
       supabase.from("students").select("*"),
       supabase.from("cohorts").select("*"),
+      supabase
+        .from("notification_log")
+        .select("id,student_name,channel,recipient,status,error,date,created_at")
+        .order("created_at", { ascending: false })
+        .limit(25),
     ]);
     setRows((a ?? []) as Absence[]);
     setStudents((s ?? []) as Student[]);
     setCohorts((c ?? []) as Cohort[]);
+    setLogs((n ?? []) as NotificationRow[]);
   }
 
   useEffect(() => {
@@ -63,7 +81,7 @@ export function AbsencesTab() {
       if (json.skipped) toast.info(`Skipped — ${json.reason}`);
       else
         toast.success(
-          `Recorded ${json.inserted} absence(s) · ${json.emailed ?? 0} guardian email(s) sent`,
+          `Recorded ${json.inserted} absence(s) · ${json.emailed ?? 0} email(s) · ${json.smsSent ?? 0} SMS · ${json.whatsappSent ?? 0} WhatsApp`,
         );
       await load();
     } catch (err) {
@@ -130,6 +148,46 @@ export function AbsencesTab() {
           ))}
         </div>
       )}
+
+      <div className="rounded-xl bg-card border border-border overflow-hidden">
+        <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+          <MessageSquare className="h-4 w-4 text-primary" />
+          <p className="text-sm font-semibold">Recent SMS / WhatsApp alerts</p>
+        </div>
+        {logs.length === 0 ? (
+          <p className="p-4 text-sm text-muted-foreground">
+            No messages sent yet. Enable SMS or WhatsApp in Settings.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {logs.map((l) => (
+              <li key={l.id} className="px-4 py-2.5 flex items-center gap-3 text-sm">
+                <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-accent text-primary">
+                  {l.channel}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="truncate font-medium">{l.student_name ?? "—"}</p>
+                  <p className="text-xs text-muted-foreground font-mono truncate">
+                    {l.recipient}
+                    {l.error ? ` · ${l.error}` : ""}
+                  </p>
+                </div>
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    l.status === "sent"
+                      ? "bg-primary/15 text-primary"
+                      : l.status === "failed"
+                        ? "bg-destructive/15 text-destructive"
+                        : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {l.status}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
