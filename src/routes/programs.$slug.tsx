@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { getPublicAnnouncement } from "@/lib/announcements.functions";
 import { ArrowUpRight, CalendarDays, GraduationCap } from "lucide-react";
 
-export const Route = createFileRoute("/programs/")({
+export const Route = createFileRoute("/programs/$slug")({
   loader: ({ params }) => getPublicAnnouncement({ data: { slug: params.slug } }),
   head: ({ loaderData }) => {
     const title = loaderData?.title
