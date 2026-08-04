@@ -12,8 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as KioskRouteImport } from './routes/kiosk'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as ProgramsRouteImport } from './routes/programs.'
 import { Route as ApiPublicHooksAbsenceCheckRouteImport } from './routes/api/public/hooks/absence-check'
 import { Route as ApiPublicHooksAnnouncementDispatchRouteImport } from './routes/api/public/hooks/announcement-dispatch'
 import { Route as ApiPublicHooksCohortLifecycleRouteImport } from './routes/api/public/hooks/cohort-lifecycle'
@@ -35,6 +37,11 @@ const KioskRoute = KioskRouteImport.update({
   path: '/kiosk',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
@@ -43,6 +50,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin/login',
   path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProgramsRoute = ProgramsRouteImport.update({
+  id: '/programs/',
+  path: '/programs/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicHooksAbsenceCheckRoute =
@@ -79,6 +91,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/attendance': typeof AttendanceRoute
   '/kiosk': typeof KioskRoute
+  '/unsubscribe': typeof UnsubscribeRoute
+  '/programs/': typeof ProgramsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
@@ -91,6 +105,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/attendance': typeof AttendanceRoute
   '/kiosk': typeof KioskRoute
+  '/unsubscribe': typeof UnsubscribeRoute
+  '/programs': typeof ProgramsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin': typeof AdminIndexRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
@@ -104,6 +120,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/attendance': typeof AttendanceRoute
   '/kiosk': typeof KioskRoute
+  '/unsubscribe': typeof UnsubscribeRoute
+  '/programs/': typeof ProgramsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
@@ -118,6 +136,8 @@ export interface FileRouteTypes {
     | '/'
     | '/attendance'
     | '/kiosk'
+    | '/unsubscribe'
+    | '/programs/'
     | '/admin/login'
     | '/admin/'
     | '/api/public/hooks/absence-check'
@@ -130,6 +150,8 @@ export interface FileRouteTypes {
     | '/'
     | '/attendance'
     | '/kiosk'
+    | '/unsubscribe'
+    | '/programs'
     | '/admin/login'
     | '/admin'
     | '/api/public/hooks/absence-check'
@@ -142,6 +164,8 @@ export interface FileRouteTypes {
     | '/'
     | '/attendance'
     | '/kiosk'
+    | '/unsubscribe'
+    | '/programs/'
     | '/admin/login'
     | '/admin/'
     | '/api/public/hooks/absence-check'
@@ -155,6 +179,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AttendanceRoute: typeof AttendanceRoute
   KioskRoute: typeof KioskRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
+  ProgramsRoute: typeof ProgramsRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminIndexRoute: typeof AdminIndexRoute
   ApiPublicHooksAbsenceCheckRoute: typeof ApiPublicHooksAbsenceCheckRoute
@@ -187,6 +213,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KioskRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/': {
       id: '/admin/'
       path: '/admin'
@@ -199,6 +232,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/login'
       fullPath: '/admin/login'
       preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/programs/': {
+      id: '/programs/'
+      path: '/programs'
+      fullPath: '/programs/'
+      preLoaderRoute: typeof ProgramsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/absence-check': {
@@ -243,6 +283,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AttendanceRoute: AttendanceRoute,
   KioskRoute: KioskRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
+  ProgramsRoute: ProgramsRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminIndexRoute: AdminIndexRoute,
   ApiPublicHooksAbsenceCheckRoute: ApiPublicHooksAbsenceCheckRoute,
