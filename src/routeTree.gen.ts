@@ -12,9 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as KioskRouteImport } from './routes/kiosk'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as ProgramsSlugRouteImport } from './routes/programs.$slug'
 import { Route as ApiPublicHooksAbsenceCheckRouteImport } from './routes/api/public/hooks/absence-check'
+import { Route as ApiPublicHooksAnnouncementDispatchRouteImport } from './routes/api/public/hooks/announcement-dispatch'
 import { Route as ApiPublicHooksCohortLifecycleRouteImport } from './routes/api/public/hooks/cohort-lifecycle'
 import { Route as ApiPublicHooksRfidClockRouteImport } from './routes/api/public/hooks/rfid-clock'
 import { Route as ApiPublicHooksSheetsSyncRouteImport } from './routes/api/public/hooks/sheets-sync'
@@ -34,6 +37,11 @@ const KioskRoute = KioskRouteImport.update({
   path: '/kiosk',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
@@ -44,10 +52,21 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/admin/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProgramsSlugRoute = ProgramsSlugRouteImport.update({
+  id: '/programs/$slug',
+  path: '/programs/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksAbsenceCheckRoute =
   ApiPublicHooksAbsenceCheckRouteImport.update({
     id: '/api/public/hooks/absence-check',
     path: '/api/public/hooks/absence-check',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksAnnouncementDispatchRoute =
+  ApiPublicHooksAnnouncementDispatchRouteImport.update({
+    id: '/api/public/hooks/announcement-dispatch',
+    path: '/api/public/hooks/announcement-dispatch',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicHooksCohortLifecycleRoute =
@@ -72,9 +91,12 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/attendance': typeof AttendanceRoute
   '/kiosk': typeof KioskRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/programs/$slug': typeof ProgramsSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
+  '/api/public/hooks/announcement-dispatch': typeof ApiPublicHooksAnnouncementDispatchRoute
   '/api/public/hooks/cohort-lifecycle': typeof ApiPublicHooksCohortLifecycleRoute
   '/api/public/hooks/rfid-clock': typeof ApiPublicHooksRfidClockRoute
   '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
@@ -83,9 +105,12 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/attendance': typeof AttendanceRoute
   '/kiosk': typeof KioskRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/programs/$slug': typeof ProgramsSlugRoute
   '/admin': typeof AdminIndexRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
+  '/api/public/hooks/announcement-dispatch': typeof ApiPublicHooksAnnouncementDispatchRoute
   '/api/public/hooks/cohort-lifecycle': typeof ApiPublicHooksCohortLifecycleRoute
   '/api/public/hooks/rfid-clock': typeof ApiPublicHooksRfidClockRoute
   '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
@@ -95,9 +120,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/attendance': typeof AttendanceRoute
   '/kiosk': typeof KioskRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/programs/$slug': typeof ProgramsSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
+  '/api/public/hooks/announcement-dispatch': typeof ApiPublicHooksAnnouncementDispatchRoute
   '/api/public/hooks/cohort-lifecycle': typeof ApiPublicHooksCohortLifecycleRoute
   '/api/public/hooks/rfid-clock': typeof ApiPublicHooksRfidClockRoute
   '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
@@ -108,9 +136,12 @@ export interface FileRouteTypes {
     | '/'
     | '/attendance'
     | '/kiosk'
+    | '/unsubscribe'
     | '/admin/login'
+    | '/programs/$slug'
     | '/admin/'
     | '/api/public/hooks/absence-check'
+    | '/api/public/hooks/announcement-dispatch'
     | '/api/public/hooks/cohort-lifecycle'
     | '/api/public/hooks/rfid-clock'
     | '/api/public/hooks/sheets-sync'
@@ -119,9 +150,12 @@ export interface FileRouteTypes {
     | '/'
     | '/attendance'
     | '/kiosk'
+    | '/unsubscribe'
     | '/admin/login'
+    | '/programs/$slug'
     | '/admin'
     | '/api/public/hooks/absence-check'
+    | '/api/public/hooks/announcement-dispatch'
     | '/api/public/hooks/cohort-lifecycle'
     | '/api/public/hooks/rfid-clock'
     | '/api/public/hooks/sheets-sync'
@@ -130,9 +164,12 @@ export interface FileRouteTypes {
     | '/'
     | '/attendance'
     | '/kiosk'
+    | '/unsubscribe'
     | '/admin/login'
+    | '/programs/$slug'
     | '/admin/'
     | '/api/public/hooks/absence-check'
+    | '/api/public/hooks/announcement-dispatch'
     | '/api/public/hooks/cohort-lifecycle'
     | '/api/public/hooks/rfid-clock'
     | '/api/public/hooks/sheets-sync'
@@ -142,9 +179,12 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AttendanceRoute: typeof AttendanceRoute
   KioskRoute: typeof KioskRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
   AdminLoginRoute: typeof AdminLoginRoute
+  ProgramsSlugRoute: typeof ProgramsSlugRoute
   AdminIndexRoute: typeof AdminIndexRoute
   ApiPublicHooksAbsenceCheckRoute: typeof ApiPublicHooksAbsenceCheckRoute
+  ApiPublicHooksAnnouncementDispatchRoute: typeof ApiPublicHooksAnnouncementDispatchRoute
   ApiPublicHooksCohortLifecycleRoute: typeof ApiPublicHooksCohortLifecycleRoute
   ApiPublicHooksRfidClockRoute: typeof ApiPublicHooksRfidClockRoute
   ApiPublicHooksSheetsSyncRoute: typeof ApiPublicHooksSheetsSyncRoute
@@ -173,6 +213,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KioskRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/': {
       id: '/admin/'
       path: '/admin'
@@ -187,11 +234,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/programs/$slug': {
+      id: '/programs/$slug'
+      path: '/programs/$slug'
+      fullPath: '/programs/$slug'
+      preLoaderRoute: typeof ProgramsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/absence-check': {
       id: '/api/public/hooks/absence-check'
       path: '/api/public/hooks/absence-check'
       fullPath: '/api/public/hooks/absence-check'
       preLoaderRoute: typeof ApiPublicHooksAbsenceCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/announcement-dispatch': {
+      id: '/api/public/hooks/announcement-dispatch'
+      path: '/api/public/hooks/announcement-dispatch'
+      fullPath: '/api/public/hooks/announcement-dispatch'
+      preLoaderRoute: typeof ApiPublicHooksAnnouncementDispatchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/cohort-lifecycle': {
@@ -222,9 +283,13 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AttendanceRoute: AttendanceRoute,
   KioskRoute: KioskRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
   AdminLoginRoute: AdminLoginRoute,
+  ProgramsSlugRoute: ProgramsSlugRoute,
   AdminIndexRoute: AdminIndexRoute,
   ApiPublicHooksAbsenceCheckRoute: ApiPublicHooksAbsenceCheckRoute,
+  ApiPublicHooksAnnouncementDispatchRoute:
+    ApiPublicHooksAnnouncementDispatchRoute,
   ApiPublicHooksCohortLifecycleRoute: ApiPublicHooksCohortLifecycleRoute,
   ApiPublicHooksRfidClockRoute: ApiPublicHooksRfidClockRoute,
   ApiPublicHooksSheetsSyncRoute: ApiPublicHooksSheetsSyncRoute,

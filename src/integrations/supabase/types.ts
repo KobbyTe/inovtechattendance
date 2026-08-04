@@ -49,6 +49,122 @@ export type Database = {
           },
         ]
       }
+      announcement_recipients: {
+        Row: {
+          announcement_id: string
+          channel: string
+          contact_value: string
+          created_at: string
+          error: string | null
+          id: string
+          provider_message_id: string | null
+          recipient_type: string
+          sent_at: string | null
+          status: string
+          student_id: string | null
+        }
+        Insert: {
+          announcement_id: string
+          channel: string
+          contact_value: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          provider_message_id?: string | null
+          recipient_type: string
+          sent_at?: string | null
+          status?: string
+          student_id?: string | null
+        }
+        Update: {
+          announcement_id?: string
+          channel?: string
+          contact_value?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          provider_message_id?: string | null
+          recipient_type?: string
+          sent_at?: string | null
+          status?: string
+          student_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcement_recipients_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcement_recipients_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["student_id"]
+          },
+        ]
+      }
+      announcements: {
+        Row: {
+          audience_filter: Json | null
+          body_html: string
+          body_plain: string
+          cohort_id: string | null
+          created_at: string
+          created_by: string
+          flyer_image_url: string | null
+          id: string
+          program_form_link: string | null
+          scheduled_at: string | null
+          slug: string
+          status: string
+          target_audience: string
+          title: string
+        }
+        Insert: {
+          audience_filter?: Json | null
+          body_html: string
+          body_plain: string
+          cohort_id?: string | null
+          created_at?: string
+          created_by: string
+          flyer_image_url?: string | null
+          id?: string
+          program_form_link?: string | null
+          scheduled_at?: string | null
+          slug: string
+          status?: string
+          target_audience?: string
+          title: string
+        }
+        Update: {
+          audience_filter?: Json | null
+          body_html?: string
+          body_plain?: string
+          cohort_id?: string | null
+          created_at?: string
+          created_by?: string
+          flyer_image_url?: string | null
+          id?: string
+          program_form_link?: string | null
+          scheduled_at?: string | null
+          slug?: string
+          status?: string
+          target_audience?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           absence_sms_template: string | null
@@ -425,6 +541,7 @@ export type Database = {
           guardian_name: string | null
           guardian_phone: string | null
           id: string
+          marketing_opt_in: boolean
           rfid_uid: string | null
           student_email: string | null
           student_id: string
@@ -439,6 +556,7 @@ export type Database = {
           guardian_name?: string | null
           guardian_phone?: string | null
           id?: string
+          marketing_opt_in?: boolean
           rfid_uid?: string | null
           student_email?: string | null
           student_id: string
@@ -453,6 +571,7 @@ export type Database = {
           guardian_name?: string | null
           guardian_phone?: string | null
           id?: string
+          marketing_opt_in?: boolean
           rfid_uid?: string | null
           student_email?: string | null
           student_id?: string

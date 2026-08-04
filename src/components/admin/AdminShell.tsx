@@ -7,6 +7,7 @@ import {
   GraduationCap,
   Layers,
   LogOut,
+  Megaphone,
   QrCode,
   Settings,
   Star,
@@ -26,6 +27,7 @@ export type AdminTab =
   | "absences"
   | "weeklybook"
   | "yearbook"
+  | "newsletter"
   | "qr"
   | "settings";
 
@@ -38,6 +40,7 @@ const TABS: { id: AdminTab; label: string; icon: typeof BarChart2 }[] = [
   { id: "absences", label: "Absences", icon: CalendarX },
   { id: "weeklybook", label: "Weeklybook", icon: CalendarCheck },
   { id: "yearbook", label: "Yearbook", icon: Sparkles },
+  { id: "newsletter", label: "News", icon: Megaphone },
   { id: "qr", label: "QR Code", icon: QrCode },
   { id: "settings", label: "Settings", icon: Settings },
 ];
@@ -119,7 +122,7 @@ export function AdminShell({
         </main>
 
         {/* Mobile bottom tab bar */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border grid grid-cols-10 z-50">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border grid grid-cols-6 z-50">
           {TABS.map((t) => (
             <button
               key={t.id}
