@@ -19,6 +19,7 @@ import { Route as ProgramsSlugRouteImport } from './routes/programs.$slug'
 import { Route as ApiPublicHooksAbsenceCheckRouteImport } from './routes/api/public/hooks/absence-check'
 import { Route as ApiPublicHooksAnnouncementDispatchRouteImport } from './routes/api/public/hooks/announcement-dispatch'
 import { Route as ApiPublicHooksCohortLifecycleRouteImport } from './routes/api/public/hooks/cohort-lifecycle'
+import { Route as ApiPublicHooksInvoiceOverdueRouteImport } from './routes/api/public/hooks/invoice-overdue'
 import { Route as ApiPublicHooksRfidClockRouteImport } from './routes/api/public/hooks/rfid-clock'
 import { Route as ApiPublicHooksSheetsSyncRouteImport } from './routes/api/public/hooks/sheets-sync'
 
@@ -75,6 +76,12 @@ const ApiPublicHooksCohortLifecycleRoute =
     path: '/api/public/hooks/cohort-lifecycle',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksInvoiceOverdueRoute =
+  ApiPublicHooksInvoiceOverdueRouteImport.update({
+    id: '/api/public/hooks/invoice-overdue',
+    path: '/api/public/hooks/invoice-overdue',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksRfidClockRoute = ApiPublicHooksRfidClockRouteImport.update({
   id: '/api/public/hooks/rfid-clock',
   path: '/api/public/hooks/rfid-clock',
@@ -98,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
   '/api/public/hooks/announcement-dispatch': typeof ApiPublicHooksAnnouncementDispatchRoute
   '/api/public/hooks/cohort-lifecycle': typeof ApiPublicHooksCohortLifecycleRoute
+  '/api/public/hooks/invoice-overdue': typeof ApiPublicHooksInvoiceOverdueRoute
   '/api/public/hooks/rfid-clock': typeof ApiPublicHooksRfidClockRoute
   '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
 }
@@ -112,6 +120,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
   '/api/public/hooks/announcement-dispatch': typeof ApiPublicHooksAnnouncementDispatchRoute
   '/api/public/hooks/cohort-lifecycle': typeof ApiPublicHooksCohortLifecycleRoute
+  '/api/public/hooks/invoice-overdue': typeof ApiPublicHooksInvoiceOverdueRoute
   '/api/public/hooks/rfid-clock': typeof ApiPublicHooksRfidClockRoute
   '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
 }
@@ -127,6 +136,7 @@ export interface FileRoutesById {
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
   '/api/public/hooks/announcement-dispatch': typeof ApiPublicHooksAnnouncementDispatchRoute
   '/api/public/hooks/cohort-lifecycle': typeof ApiPublicHooksCohortLifecycleRoute
+  '/api/public/hooks/invoice-overdue': typeof ApiPublicHooksInvoiceOverdueRoute
   '/api/public/hooks/rfid-clock': typeof ApiPublicHooksRfidClockRoute
   '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
 }
@@ -143,6 +153,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/absence-check'
     | '/api/public/hooks/announcement-dispatch'
     | '/api/public/hooks/cohort-lifecycle'
+    | '/api/public/hooks/invoice-overdue'
     | '/api/public/hooks/rfid-clock'
     | '/api/public/hooks/sheets-sync'
   fileRoutesByTo: FileRoutesByTo
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/absence-check'
     | '/api/public/hooks/announcement-dispatch'
     | '/api/public/hooks/cohort-lifecycle'
+    | '/api/public/hooks/invoice-overdue'
     | '/api/public/hooks/rfid-clock'
     | '/api/public/hooks/sheets-sync'
   id:
@@ -171,6 +183,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/absence-check'
     | '/api/public/hooks/announcement-dispatch'
     | '/api/public/hooks/cohort-lifecycle'
+    | '/api/public/hooks/invoice-overdue'
     | '/api/public/hooks/rfid-clock'
     | '/api/public/hooks/sheets-sync'
   fileRoutesById: FileRoutesById
@@ -186,6 +199,7 @@ export interface RootRouteChildren {
   ApiPublicHooksAbsenceCheckRoute: typeof ApiPublicHooksAbsenceCheckRoute
   ApiPublicHooksAnnouncementDispatchRoute: typeof ApiPublicHooksAnnouncementDispatchRoute
   ApiPublicHooksCohortLifecycleRoute: typeof ApiPublicHooksCohortLifecycleRoute
+  ApiPublicHooksInvoiceOverdueRoute: typeof ApiPublicHooksInvoiceOverdueRoute
   ApiPublicHooksRfidClockRoute: typeof ApiPublicHooksRfidClockRoute
   ApiPublicHooksSheetsSyncRoute: typeof ApiPublicHooksSheetsSyncRoute
 }
@@ -262,6 +276,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksCohortLifecycleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/invoice-overdue': {
+      id: '/api/public/hooks/invoice-overdue'
+      path: '/api/public/hooks/invoice-overdue'
+      fullPath: '/api/public/hooks/invoice-overdue'
+      preLoaderRoute: typeof ApiPublicHooksInvoiceOverdueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/rfid-clock': {
       id: '/api/public/hooks/rfid-clock'
       path: '/api/public/hooks/rfid-clock'
@@ -291,6 +312,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksAnnouncementDispatchRoute:
     ApiPublicHooksAnnouncementDispatchRoute,
   ApiPublicHooksCohortLifecycleRoute: ApiPublicHooksCohortLifecycleRoute,
+  ApiPublicHooksInvoiceOverdueRoute: ApiPublicHooksInvoiceOverdueRoute,
   ApiPublicHooksRfidClockRoute: ApiPublicHooksRfidClockRoute,
   ApiPublicHooksSheetsSyncRoute: ApiPublicHooksSheetsSyncRoute,
 }
