@@ -22,9 +22,8 @@ export const Route = createFileRoute("/kiosk")({
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
     ],
   }),
-  validateSearch: (s: Record<string, unknown>) => ({
-    s: typeof s.s === "string" ? s.s : undefined,
-  }),
+  validateSearch: (s: Record<string, unknown>): { s?: string } =>
+    typeof s.s === "string" ? { s: s.s } : {},
   component: KioskPage,
 });
 

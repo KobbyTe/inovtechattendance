@@ -408,6 +408,56 @@ export type Database = {
         }
         Relationships: []
       }
+      invoices: {
+        Row: {
+          amount_due: number
+          balance_remaining: number
+          created_at: string
+          due_date: string
+          id: string
+          installment_label: string
+          status: string
+          student_payment_plan_id: string
+          updated_at: string
+          waived_by: string | null
+          waived_reason: string | null
+        }
+        Insert: {
+          amount_due: number
+          balance_remaining: number
+          created_at?: string
+          due_date: string
+          id?: string
+          installment_label: string
+          status?: string
+          student_payment_plan_id: string
+          updated_at?: string
+          waived_by?: string | null
+          waived_reason?: string | null
+        }
+        Update: {
+          amount_due?: number
+          balance_remaining?: number
+          created_at?: string
+          due_date?: string
+          id?: string
+          installment_label?: string
+          status?: string
+          student_payment_plan_id?: string
+          updated_at?: string
+          waived_by?: string | null
+          waived_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_student_payment_plan_id_fkey"
+            columns: ["student_payment_plan_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_log: {
         Row: {
           body: string | null
@@ -458,6 +508,119 @@ export type Database = {
           student_name?: string | null
         }
         Relationships: []
+      }
+      payment_plans: {
+        Row: {
+          cohort_id: string
+          created_at: string
+          created_by: string
+          currency: string
+          id: string
+          installment_count: number
+          installment_schedule: Json
+          name: string
+          total_amount: number
+        }
+        Insert: {
+          cohort_id: string
+          created_at?: string
+          created_by: string
+          currency?: string
+          id?: string
+          installment_count?: number
+          installment_schedule?: Json
+          name: string
+          total_amount: number
+        }
+        Update: {
+          cohort_id?: string
+          created_at?: string
+          created_by?: string
+          currency?: string
+          id?: string
+          installment_count?: number
+          installment_schedule?: Json
+          name?: string
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_plans_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          channel: string
+          created_at: string
+          currency: string
+          id: string
+          invoice_id: string | null
+          note: string | null
+          overpayment_amount: number
+          paid_at: string
+          provider: string | null
+          provider_reference: string | null
+          reconciled_at: string | null
+          recorded_by: string | null
+          status: string
+          student_id: string
+        }
+        Insert: {
+          amount: number
+          channel: string
+          created_at?: string
+          currency?: string
+          id?: string
+          invoice_id?: string | null
+          note?: string | null
+          overpayment_amount?: number
+          paid_at?: string
+          provider?: string | null
+          provider_reference?: string | null
+          reconciled_at?: string | null
+          recorded_by?: string | null
+          status?: string
+          student_id: string
+        }
+        Update: {
+          amount?: number
+          channel?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          invoice_id?: string | null
+          note?: string | null
+          overpayment_amount?: number
+          paid_at?: string
+          provider?: string | null
+          provider_reference?: string | null
+          reconciled_at?: string | null
+          recorded_by?: string | null
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       session_reviews: {
         Row: {
@@ -527,6 +690,55 @@ export type Database = {
             columns: ["cohort_id"]
             isOneToOne: false
             referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_payment_plans: {
+        Row: {
+          cohort_id: string
+          enrolled_at: string
+          id: string
+          payment_plan_id: string
+          status: string
+          student_id: string
+        }
+        Insert: {
+          cohort_id: string
+          enrolled_at?: string
+          id?: string
+          payment_plan_id: string
+          status?: string
+          student_id: string
+        }
+        Update: {
+          cohort_id?: string
+          enrolled_at?: string
+          id?: string
+          payment_plan_id?: string
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_payment_plans_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_payment_plans_payment_plan_id_fkey"
+            columns: ["payment_plan_id"]
+            isOneToOne: false
+            referencedRelation: "payment_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_payment_plans_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
@@ -613,6 +825,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_payment_to_invoice: {
+        Args: { _payment_id: string }
+        Returns: undefined
+      }
       claim_admin_if_none: { Args: never; Returns: boolean }
       has_role: {
         Args: {
@@ -621,6 +837,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      mark_overdue_invoices: { Args: never; Returns: number }
     }
     Enums: {
       app_role: "admin"
