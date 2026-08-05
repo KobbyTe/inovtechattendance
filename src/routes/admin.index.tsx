@@ -13,6 +13,7 @@ import { ReviewsTab } from "@/components/admin/ReviewsTab";
 import { YearbookTab } from "@/components/admin/YearbookTab";
 import { WeeklybookTab } from "@/components/admin/WeeklybookTab";
 import { NewsletterTab } from "@/components/admin/NewsletterTab";
+import { PaymentsTab } from "@/components/admin/PaymentsTab";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
@@ -84,6 +85,7 @@ function AdminPage() {
       {tab === "weeklybook" && <WeeklybookTab />}
       {tab === "yearbook" && <YearbookTab />}
       {tab === "newsletter" && <NewsletterTab />}
+      {tab === "payments" && <PaymentsTab />}
       {tab === "qr" && <QRCodePanel />}
       {tab === "settings" && <SettingsTab />}
     </AdminShell>
