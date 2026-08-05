@@ -13,6 +13,7 @@ import {
   Star,
   Sparkles,
   Users,
+  Wallet,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
@@ -28,6 +29,7 @@ export type AdminTab =
   | "weeklybook"
   | "yearbook"
   | "newsletter"
+  | "payments"
   | "qr"
   | "settings";
 
@@ -41,6 +43,7 @@ const TABS: { id: AdminTab; label: string; icon: typeof BarChart2 }[] = [
   { id: "weeklybook", label: "Weeklybook", icon: CalendarCheck },
   { id: "yearbook", label: "Yearbook", icon: Sparkles },
   { id: "newsletter", label: "News", icon: Megaphone },
+  { id: "payments", label: "Payments", icon: Wallet },
   { id: "qr", label: "QR Code", icon: QrCode },
   { id: "settings", label: "Settings", icon: Settings },
 ];
