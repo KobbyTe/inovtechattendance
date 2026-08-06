@@ -443,6 +443,33 @@ export function PaymentsTab() {
                             <Banknote className="h-4 w-4 mr-1" /> Record payment
                           </Button>
                         )}
+                        {inv.status !== "paid" && inv.status !== "waived" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={busy}
+                            onClick={() =>
+                              void guard(async () => {
+                                const r = (await payLink({
+                                  data: {
+                                    invoiceId: inv.id,
+                                    origin: window.location.origin,
+                                  },
+                                })) as any;
+                                await navigator.clipboard
+                                  .writeText(r.url)
+                                  .catch(() => undefined);
+                                toast.success(
+                                  r.configured
+                                    ? `Pay link copied — ${money(r.amount, r.currency)}`
+                                    : "Link copied — online payments activate once the Paystack key is added",
+                                );
+                              })
+                            }
+                          >
+                            <Link2 className="h-4 w-4 mr-1" /> Copy pay link
+                          </Button>
+                        )}
                         {inv.status !== "waived" && inv.status !== "paid" && (
                           <Button
                             size="sm"
