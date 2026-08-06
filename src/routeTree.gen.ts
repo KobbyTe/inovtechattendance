@@ -15,11 +15,15 @@ import { Route as KioskRouteImport } from './routes/kiosk'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as PayReturnRouteImport } from './routes/pay.return'
 import { Route as ProgramsSlugRouteImport } from './routes/programs.$slug'
+import { Route as ApiPublicCheckoutVerifyRouteImport } from './routes/api/public/checkout-verify'
+import { Route as ApiPublicCheckoutInvoiceIdRouteImport } from './routes/api/public/checkout/$invoiceId'
 import { Route as ApiPublicHooksAbsenceCheckRouteImport } from './routes/api/public/hooks/absence-check'
 import { Route as ApiPublicHooksAnnouncementDispatchRouteImport } from './routes/api/public/hooks/announcement-dispatch'
 import { Route as ApiPublicHooksCohortLifecycleRouteImport } from './routes/api/public/hooks/cohort-lifecycle'
 import { Route as ApiPublicHooksInvoiceOverdueRouteImport } from './routes/api/public/hooks/invoice-overdue'
+import { Route as ApiPublicHooksPaystackRouteImport } from './routes/api/public/hooks/paystack'
 import { Route as ApiPublicHooksRfidClockRouteImport } from './routes/api/public/hooks/rfid-clock'
 import { Route as ApiPublicHooksSheetsSyncRouteImport } from './routes/api/public/hooks/sheets-sync'
 
@@ -53,11 +57,27 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/admin/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PayReturnRoute = PayReturnRouteImport.update({
+  id: '/pay/return',
+  path: '/pay/return',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProgramsSlugRoute = ProgramsSlugRouteImport.update({
   id: '/programs/$slug',
   path: '/programs/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCheckoutVerifyRoute = ApiPublicCheckoutVerifyRouteImport.update({
+  id: '/api/public/checkout-verify',
+  path: '/api/public/checkout-verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCheckoutInvoiceIdRoute =
+  ApiPublicCheckoutInvoiceIdRouteImport.update({
+    id: '/api/public/checkout/$invoiceId',
+    path: '/api/public/checkout/$invoiceId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksAbsenceCheckRoute =
   ApiPublicHooksAbsenceCheckRouteImport.update({
     id: '/api/public/hooks/absence-check',
@@ -82,6 +102,11 @@ const ApiPublicHooksInvoiceOverdueRoute =
     path: '/api/public/hooks/invoice-overdue',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksPaystackRoute = ApiPublicHooksPaystackRouteImport.update({
+  id: '/api/public/hooks/paystack',
+  path: '/api/public/hooks/paystack',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksRfidClockRoute = ApiPublicHooksRfidClockRouteImport.update({
   id: '/api/public/hooks/rfid-clock',
   path: '/api/public/hooks/rfid-clock',
@@ -100,12 +125,16 @@ export interface FileRoutesByFullPath {
   '/kiosk': typeof KioskRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/pay/return': typeof PayReturnRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/api/public/checkout-verify': typeof ApiPublicCheckoutVerifyRoute
+  '/api/public/checkout/$invoiceId': typeof ApiPublicCheckoutInvoiceIdRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
   '/api/public/hooks/announcement-dispatch': typeof ApiPublicHooksAnnouncementDispatchRoute
   '/api/public/hooks/cohort-lifecycle': typeof ApiPublicHooksCohortLifecycleRoute
   '/api/public/hooks/invoice-overdue': typeof ApiPublicHooksInvoiceOverdueRoute
+  '/api/public/hooks/paystack': typeof ApiPublicHooksPaystackRoute
   '/api/public/hooks/rfid-clock': typeof ApiPublicHooksRfidClockRoute
   '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
 }
@@ -115,12 +144,16 @@ export interface FileRoutesByTo {
   '/kiosk': typeof KioskRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/pay/return': typeof PayReturnRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/admin': typeof AdminIndexRoute
+  '/api/public/checkout-verify': typeof ApiPublicCheckoutVerifyRoute
+  '/api/public/checkout/$invoiceId': typeof ApiPublicCheckoutInvoiceIdRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
   '/api/public/hooks/announcement-dispatch': typeof ApiPublicHooksAnnouncementDispatchRoute
   '/api/public/hooks/cohort-lifecycle': typeof ApiPublicHooksCohortLifecycleRoute
   '/api/public/hooks/invoice-overdue': typeof ApiPublicHooksInvoiceOverdueRoute
+  '/api/public/hooks/paystack': typeof ApiPublicHooksPaystackRoute
   '/api/public/hooks/rfid-clock': typeof ApiPublicHooksRfidClockRoute
   '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
 }
@@ -131,12 +164,16 @@ export interface FileRoutesById {
   '/kiosk': typeof KioskRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/pay/return': typeof PayReturnRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/api/public/checkout-verify': typeof ApiPublicCheckoutVerifyRoute
+  '/api/public/checkout/$invoiceId': typeof ApiPublicCheckoutInvoiceIdRoute
   '/api/public/hooks/absence-check': typeof ApiPublicHooksAbsenceCheckRoute
   '/api/public/hooks/announcement-dispatch': typeof ApiPublicHooksAnnouncementDispatchRoute
   '/api/public/hooks/cohort-lifecycle': typeof ApiPublicHooksCohortLifecycleRoute
   '/api/public/hooks/invoice-overdue': typeof ApiPublicHooksInvoiceOverdueRoute
+  '/api/public/hooks/paystack': typeof ApiPublicHooksPaystackRoute
   '/api/public/hooks/rfid-clock': typeof ApiPublicHooksRfidClockRoute
   '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
 }
@@ -148,12 +185,16 @@ export interface FileRouteTypes {
     | '/kiosk'
     | '/unsubscribe'
     | '/admin/login'
+    | '/pay/return'
     | '/programs/$slug'
     | '/admin/'
+    | '/api/public/checkout-verify'
+    | '/api/public/checkout/$invoiceId'
     | '/api/public/hooks/absence-check'
     | '/api/public/hooks/announcement-dispatch'
     | '/api/public/hooks/cohort-lifecycle'
     | '/api/public/hooks/invoice-overdue'
+    | '/api/public/hooks/paystack'
     | '/api/public/hooks/rfid-clock'
     | '/api/public/hooks/sheets-sync'
   fileRoutesByTo: FileRoutesByTo
@@ -163,12 +204,16 @@ export interface FileRouteTypes {
     | '/kiosk'
     | '/unsubscribe'
     | '/admin/login'
+    | '/pay/return'
     | '/programs/$slug'
     | '/admin'
+    | '/api/public/checkout-verify'
+    | '/api/public/checkout/$invoiceId'
     | '/api/public/hooks/absence-check'
     | '/api/public/hooks/announcement-dispatch'
     | '/api/public/hooks/cohort-lifecycle'
     | '/api/public/hooks/invoice-overdue'
+    | '/api/public/hooks/paystack'
     | '/api/public/hooks/rfid-clock'
     | '/api/public/hooks/sheets-sync'
   id:
@@ -178,12 +223,16 @@ export interface FileRouteTypes {
     | '/kiosk'
     | '/unsubscribe'
     | '/admin/login'
+    | '/pay/return'
     | '/programs/$slug'
     | '/admin/'
+    | '/api/public/checkout-verify'
+    | '/api/public/checkout/$invoiceId'
     | '/api/public/hooks/absence-check'
     | '/api/public/hooks/announcement-dispatch'
     | '/api/public/hooks/cohort-lifecycle'
     | '/api/public/hooks/invoice-overdue'
+    | '/api/public/hooks/paystack'
     | '/api/public/hooks/rfid-clock'
     | '/api/public/hooks/sheets-sync'
   fileRoutesById: FileRoutesById
@@ -194,12 +243,16 @@ export interface RootRouteChildren {
   KioskRoute: typeof KioskRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   AdminLoginRoute: typeof AdminLoginRoute
+  PayReturnRoute: typeof PayReturnRoute
   ProgramsSlugRoute: typeof ProgramsSlugRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  ApiPublicCheckoutVerifyRoute: typeof ApiPublicCheckoutVerifyRoute
+  ApiPublicCheckoutInvoiceIdRoute: typeof ApiPublicCheckoutInvoiceIdRoute
   ApiPublicHooksAbsenceCheckRoute: typeof ApiPublicHooksAbsenceCheckRoute
   ApiPublicHooksAnnouncementDispatchRoute: typeof ApiPublicHooksAnnouncementDispatchRoute
   ApiPublicHooksCohortLifecycleRoute: typeof ApiPublicHooksCohortLifecycleRoute
   ApiPublicHooksInvoiceOverdueRoute: typeof ApiPublicHooksInvoiceOverdueRoute
+  ApiPublicHooksPaystackRoute: typeof ApiPublicHooksPaystackRoute
   ApiPublicHooksRfidClockRoute: typeof ApiPublicHooksRfidClockRoute
   ApiPublicHooksSheetsSyncRoute: typeof ApiPublicHooksSheetsSyncRoute
 }
@@ -248,11 +301,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pay/return': {
+      id: '/pay/return'
+      path: '/pay/return'
+      fullPath: '/pay/return'
+      preLoaderRoute: typeof PayReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/programs/$slug': {
       id: '/programs/$slug'
       path: '/programs/$slug'
       fullPath: '/programs/$slug'
       preLoaderRoute: typeof ProgramsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/checkout-verify': {
+      id: '/api/public/checkout-verify'
+      path: '/api/public/checkout-verify'
+      fullPath: '/api/public/checkout-verify'
+      preLoaderRoute: typeof ApiPublicCheckoutVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/checkout/$invoiceId': {
+      id: '/api/public/checkout/$invoiceId'
+      path: '/api/public/checkout/$invoiceId'
+      fullPath: '/api/public/checkout/$invoiceId'
+      preLoaderRoute: typeof ApiPublicCheckoutInvoiceIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/absence-check': {
@@ -283,6 +357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksInvoiceOverdueRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/paystack': {
+      id: '/api/public/hooks/paystack'
+      path: '/api/public/hooks/paystack'
+      fullPath: '/api/public/hooks/paystack'
+      preLoaderRoute: typeof ApiPublicHooksPaystackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/rfid-clock': {
       id: '/api/public/hooks/rfid-clock'
       path: '/api/public/hooks/rfid-clock'
@@ -306,13 +387,17 @@ const rootRouteChildren: RootRouteChildren = {
   KioskRoute: KioskRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   AdminLoginRoute: AdminLoginRoute,
+  PayReturnRoute: PayReturnRoute,
   ProgramsSlugRoute: ProgramsSlugRoute,
   AdminIndexRoute: AdminIndexRoute,
+  ApiPublicCheckoutVerifyRoute: ApiPublicCheckoutVerifyRoute,
+  ApiPublicCheckoutInvoiceIdRoute: ApiPublicCheckoutInvoiceIdRoute,
   ApiPublicHooksAbsenceCheckRoute: ApiPublicHooksAbsenceCheckRoute,
   ApiPublicHooksAnnouncementDispatchRoute:
     ApiPublicHooksAnnouncementDispatchRoute,
   ApiPublicHooksCohortLifecycleRoute: ApiPublicHooksCohortLifecycleRoute,
   ApiPublicHooksInvoiceOverdueRoute: ApiPublicHooksInvoiceOverdueRoute,
+  ApiPublicHooksPaystackRoute: ApiPublicHooksPaystackRoute,
   ApiPublicHooksRfidClockRoute: ApiPublicHooksRfidClockRoute,
   ApiPublicHooksSheetsSyncRoute: ApiPublicHooksSheetsSyncRoute,
 }

@@ -8,6 +8,7 @@ import {
   Banknote,
   ChevronDown,
   Loader2,
+  Link2,
   Plus,
   RefreshCw,
   Trash2,
@@ -35,6 +36,10 @@ import {
   unassignStudentPlan,
   waiveInvoice,
 } from "@/lib/invoice-generation.functions";
+import {
+  getInvoicePaymentLink,
+  reconcilePaystackReference,
+} from "@/lib/checkout.functions";
 
 type Installment = { label: string; due_date: string; amount: string };
 
@@ -70,6 +75,8 @@ export function PaymentsTab() {
   const assign = useServerFn(assignPaymentPlan);
   const unassign = useServerFn(unassignStudentPlan);
   const recordPay = useServerFn(recordManualPayment);
+  const payLink = useServerFn(getInvoicePaymentLink);
+  const reconcileRef = useServerFn(reconcilePaystackReference);
   const waive = useServerFn(waiveInvoice);
   const sweep = useServerFn(runOverdueSweepNow);
 
@@ -180,6 +187,26 @@ export function PaymentsTab() {
             }
           >
             <AlertCircle className="h-4 w-4 mr-1" /> Run overdue check
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={busy}
+            onClick={() =>
+              void guard(async () => {
+                const reference = window.prompt("Paystack reference to re-check?");
+                if (!reference || reference.trim().length < 4) return;
+                const r = (await reconcileRef({
+                  data: { reference: reference.trim() },
+                })) as any;
+                toast.success(
+                  r.applied ? "Payment reconciled" : `Nothing applied (${r.status})`,
+                );
+                await loadLedger(cohortId);
+              })
+            }
+          >
+            <Link2 className="h-4 w-4 mr-1" /> Re-check reference
           </Button>
           <Button size="sm" onClick={() => setBuilderOpen(true)}>
             <Plus className="h-4 w-4 mr-1" /> New plan
@@ -434,6 +461,33 @@ export function PaymentsTab() {
                             }
                           >
                             <Banknote className="h-4 w-4 mr-1" /> Record payment
+                          </Button>
+                        )}
+                        {inv.status !== "paid" && inv.status !== "waived" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={busy}
+                            onClick={() =>
+                              void guard(async () => {
+                                const r = (await payLink({
+                                  data: {
+                                    invoiceId: inv.id,
+                                    origin: window.location.origin,
+                                  },
+                                })) as any;
+                                await navigator.clipboard
+                                  .writeText(r.url)
+                                  .catch(() => undefined);
+                                toast.success(
+                                  r.configured
+                                    ? `Pay link copied — ${money(r.amount, r.currency)}`
+                                    : "Link copied — online payments activate once the Paystack key is added",
+                                );
+                              })
+                            }
+                          >
+                            <Link2 className="h-4 w-4 mr-1" /> Copy pay link
                           </Button>
                         )}
                         {inv.status !== "waived" && inv.status !== "paid" && (
