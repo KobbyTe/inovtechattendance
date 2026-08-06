@@ -188,6 +188,26 @@ export function PaymentsTab() {
           >
             <AlertCircle className="h-4 w-4 mr-1" /> Run overdue check
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={busy}
+            onClick={() =>
+              void guard(async () => {
+                const reference = window.prompt("Paystack reference to re-check?");
+                if (!reference || reference.trim().length < 4) return;
+                const r = (await reconcileRef({
+                  data: { reference: reference.trim() },
+                })) as any;
+                toast.success(
+                  r.applied ? "Payment reconciled" : `Nothing applied (${r.status})`,
+                );
+                await loadLedger(cohortId);
+              })
+            }
+          >
+            <Link2 className="h-4 w-4 mr-1" /> Re-check reference
+          </Button>
           <Button size="sm" onClick={() => setBuilderOpen(true)}>
             <Plus className="h-4 w-4 mr-1" /> New plan
           </Button>
