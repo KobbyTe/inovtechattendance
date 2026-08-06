@@ -8,6 +8,7 @@ import {
   Banknote,
   ChevronDown,
   Loader2,
+  Link2,
   Plus,
   RefreshCw,
   Trash2,
@@ -35,6 +36,10 @@ import {
   unassignStudentPlan,
   waiveInvoice,
 } from "@/lib/invoice-generation.functions";
+import {
+  getInvoicePaymentLink,
+  reconcilePaystackReference,
+} from "@/lib/checkout.functions";
 
 type Installment = { label: string; due_date: string; amount: string };
 
@@ -70,6 +75,8 @@ export function PaymentsTab() {
   const assign = useServerFn(assignPaymentPlan);
   const unassign = useServerFn(unassignStudentPlan);
   const recordPay = useServerFn(recordManualPayment);
+  const payLink = useServerFn(getInvoicePaymentLink);
+  const reconcileRef = useServerFn(reconcilePaystackReference);
   const waive = useServerFn(waiveInvoice);
   const sweep = useServerFn(runOverdueSweepNow);
 

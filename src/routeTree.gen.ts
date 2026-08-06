@@ -15,6 +15,7 @@ import { Route as KioskRouteImport } from './routes/kiosk'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as PayReturnRouteImport } from './routes/pay.return'
 import { Route as ProgramsSlugRouteImport } from './routes/programs.$slug'
 import { Route as ApiPublicCheckoutVerifyRouteImport } from './routes/api/public/checkout-verify'
 import { Route as ApiPublicCheckoutInvoiceIdRouteImport } from './routes/api/public/checkout/$invoiceId'
@@ -54,6 +55,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin/login',
   path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PayReturnRoute = PayReturnRouteImport.update({
+  id: '/pay/return',
+  path: '/pay/return',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProgramsSlugRoute = ProgramsSlugRouteImport.update({
@@ -119,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/kiosk': typeof KioskRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/pay/return': typeof PayReturnRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/api/public/checkout-verify': typeof ApiPublicCheckoutVerifyRoute
@@ -137,6 +144,7 @@ export interface FileRoutesByTo {
   '/kiosk': typeof KioskRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/pay/return': typeof PayReturnRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/admin': typeof AdminIndexRoute
   '/api/public/checkout-verify': typeof ApiPublicCheckoutVerifyRoute
@@ -156,6 +164,7 @@ export interface FileRoutesById {
   '/kiosk': typeof KioskRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/pay/return': typeof PayReturnRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/api/public/checkout-verify': typeof ApiPublicCheckoutVerifyRoute
@@ -176,6 +185,7 @@ export interface FileRouteTypes {
     | '/kiosk'
     | '/unsubscribe'
     | '/admin/login'
+    | '/pay/return'
     | '/programs/$slug'
     | '/admin/'
     | '/api/public/checkout-verify'
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
     | '/kiosk'
     | '/unsubscribe'
     | '/admin/login'
+    | '/pay/return'
     | '/programs/$slug'
     | '/admin'
     | '/api/public/checkout-verify'
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '/kiosk'
     | '/unsubscribe'
     | '/admin/login'
+    | '/pay/return'
     | '/programs/$slug'
     | '/admin/'
     | '/api/public/checkout-verify'
@@ -231,6 +243,7 @@ export interface RootRouteChildren {
   KioskRoute: typeof KioskRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   AdminLoginRoute: typeof AdminLoginRoute
+  PayReturnRoute: typeof PayReturnRoute
   ProgramsSlugRoute: typeof ProgramsSlugRoute
   AdminIndexRoute: typeof AdminIndexRoute
   ApiPublicCheckoutVerifyRoute: typeof ApiPublicCheckoutVerifyRoute
@@ -286,6 +299,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/login'
       fullPath: '/admin/login'
       preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pay/return': {
+      id: '/pay/return'
+      path: '/pay/return'
+      fullPath: '/pay/return'
+      preLoaderRoute: typeof PayReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/programs/$slug': {
@@ -367,6 +387,7 @@ const rootRouteChildren: RootRouteChildren = {
   KioskRoute: KioskRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   AdminLoginRoute: AdminLoginRoute,
+  PayReturnRoute: PayReturnRoute,
   ProgramsSlugRoute: ProgramsSlugRoute,
   AdminIndexRoute: AdminIndexRoute,
   ApiPublicCheckoutVerifyRoute: ApiPublicCheckoutVerifyRoute,
