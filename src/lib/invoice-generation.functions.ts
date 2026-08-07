@@ -314,9 +314,21 @@ export const recordManualPayment = createServerFn({ method: "POST" })
       paidAt: new Date(data.paidAt).toISOString(),
       note: data.note ?? null,
     });
+    // Payment-received notification (same path as the Paystack webhook).
+    let notified = false;
+    if (payment?.id && data.invoiceId) {
+      try {
+        const { notifyPaymentReceived } = await import("./payment-notify.server");
+        const res = await notifyPaymentReceived(db, payment.id);
+        notified = !("skipped" in res);
+      } catch {
+        /* never fail a recorded payment because a notification failed */
+      }
+    }
     return {
       ok: true,
       overpayment: Number(payment.overpayment_amount ?? 0),
+      notified,
     };
   });
 

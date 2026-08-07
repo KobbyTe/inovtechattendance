@@ -23,6 +23,7 @@ import { Route as ApiPublicHooksAbsenceCheckRouteImport } from './routes/api/pub
 import { Route as ApiPublicHooksAnnouncementDispatchRouteImport } from './routes/api/public/hooks/announcement-dispatch'
 import { Route as ApiPublicHooksCohortLifecycleRouteImport } from './routes/api/public/hooks/cohort-lifecycle'
 import { Route as ApiPublicHooksInvoiceOverdueRouteImport } from './routes/api/public/hooks/invoice-overdue'
+import { Route as ApiPublicHooksPaymentRemindersRouteImport } from './routes/api/public/hooks/payment-reminders'
 import { Route as ApiPublicHooksPaystackRouteImport } from './routes/api/public/hooks/paystack'
 import { Route as ApiPublicHooksRfidClockRouteImport } from './routes/api/public/hooks/rfid-clock'
 import { Route as ApiPublicHooksSheetsSyncRouteImport } from './routes/api/public/hooks/sheets-sync'
@@ -102,6 +103,12 @@ const ApiPublicHooksInvoiceOverdueRoute =
     path: '/api/public/hooks/invoice-overdue',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksPaymentRemindersRoute =
+  ApiPublicHooksPaymentRemindersRouteImport.update({
+    id: '/api/public/hooks/payment-reminders',
+    path: '/api/public/hooks/payment-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksPaystackRoute = ApiPublicHooksPaystackRouteImport.update({
   id: '/api/public/hooks/paystack',
   path: '/api/public/hooks/paystack',
@@ -134,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/announcement-dispatch': typeof ApiPublicHooksAnnouncementDispatchRoute
   '/api/public/hooks/cohort-lifecycle': typeof ApiPublicHooksCohortLifecycleRoute
   '/api/public/hooks/invoice-overdue': typeof ApiPublicHooksInvoiceOverdueRoute
+  '/api/public/hooks/payment-reminders': typeof ApiPublicHooksPaymentRemindersRoute
   '/api/public/hooks/paystack': typeof ApiPublicHooksPaystackRoute
   '/api/public/hooks/rfid-clock': typeof ApiPublicHooksRfidClockRoute
   '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
@@ -153,6 +161,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/announcement-dispatch': typeof ApiPublicHooksAnnouncementDispatchRoute
   '/api/public/hooks/cohort-lifecycle': typeof ApiPublicHooksCohortLifecycleRoute
   '/api/public/hooks/invoice-overdue': typeof ApiPublicHooksInvoiceOverdueRoute
+  '/api/public/hooks/payment-reminders': typeof ApiPublicHooksPaymentRemindersRoute
   '/api/public/hooks/paystack': typeof ApiPublicHooksPaystackRoute
   '/api/public/hooks/rfid-clock': typeof ApiPublicHooksRfidClockRoute
   '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
@@ -173,6 +182,7 @@ export interface FileRoutesById {
   '/api/public/hooks/announcement-dispatch': typeof ApiPublicHooksAnnouncementDispatchRoute
   '/api/public/hooks/cohort-lifecycle': typeof ApiPublicHooksCohortLifecycleRoute
   '/api/public/hooks/invoice-overdue': typeof ApiPublicHooksInvoiceOverdueRoute
+  '/api/public/hooks/payment-reminders': typeof ApiPublicHooksPaymentRemindersRoute
   '/api/public/hooks/paystack': typeof ApiPublicHooksPaystackRoute
   '/api/public/hooks/rfid-clock': typeof ApiPublicHooksRfidClockRoute
   '/api/public/hooks/sheets-sync': typeof ApiPublicHooksSheetsSyncRoute
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/announcement-dispatch'
     | '/api/public/hooks/cohort-lifecycle'
     | '/api/public/hooks/invoice-overdue'
+    | '/api/public/hooks/payment-reminders'
     | '/api/public/hooks/paystack'
     | '/api/public/hooks/rfid-clock'
     | '/api/public/hooks/sheets-sync'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/announcement-dispatch'
     | '/api/public/hooks/cohort-lifecycle'
     | '/api/public/hooks/invoice-overdue'
+    | '/api/public/hooks/payment-reminders'
     | '/api/public/hooks/paystack'
     | '/api/public/hooks/rfid-clock'
     | '/api/public/hooks/sheets-sync'
@@ -232,6 +244,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/announcement-dispatch'
     | '/api/public/hooks/cohort-lifecycle'
     | '/api/public/hooks/invoice-overdue'
+    | '/api/public/hooks/payment-reminders'
     | '/api/public/hooks/paystack'
     | '/api/public/hooks/rfid-clock'
     | '/api/public/hooks/sheets-sync'
@@ -252,6 +265,7 @@ export interface RootRouteChildren {
   ApiPublicHooksAnnouncementDispatchRoute: typeof ApiPublicHooksAnnouncementDispatchRoute
   ApiPublicHooksCohortLifecycleRoute: typeof ApiPublicHooksCohortLifecycleRoute
   ApiPublicHooksInvoiceOverdueRoute: typeof ApiPublicHooksInvoiceOverdueRoute
+  ApiPublicHooksPaymentRemindersRoute: typeof ApiPublicHooksPaymentRemindersRoute
   ApiPublicHooksPaystackRoute: typeof ApiPublicHooksPaystackRoute
   ApiPublicHooksRfidClockRoute: typeof ApiPublicHooksRfidClockRoute
   ApiPublicHooksSheetsSyncRoute: typeof ApiPublicHooksSheetsSyncRoute
@@ -357,6 +371,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksInvoiceOverdueRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/payment-reminders': {
+      id: '/api/public/hooks/payment-reminders'
+      path: '/api/public/hooks/payment-reminders'
+      fullPath: '/api/public/hooks/payment-reminders'
+      preLoaderRoute: typeof ApiPublicHooksPaymentRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/paystack': {
       id: '/api/public/hooks/paystack'
       path: '/api/public/hooks/paystack'
@@ -397,6 +418,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksAnnouncementDispatchRoute,
   ApiPublicHooksCohortLifecycleRoute: ApiPublicHooksCohortLifecycleRoute,
   ApiPublicHooksInvoiceOverdueRoute: ApiPublicHooksInvoiceOverdueRoute,
+  ApiPublicHooksPaymentRemindersRoute: ApiPublicHooksPaymentRemindersRoute,
   ApiPublicHooksPaystackRoute: ApiPublicHooksPaystackRoute,
   ApiPublicHooksRfidClockRoute: ApiPublicHooksRfidClockRoute,
   ApiPublicHooksSheetsSyncRoute: ApiPublicHooksSheetsSyncRoute,
@@ -404,13 +426,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
