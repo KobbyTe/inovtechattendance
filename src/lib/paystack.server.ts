@@ -254,6 +254,12 @@ export async function reconcileTransaction(
   if (invoiceId && paymentId) {
     const { error } = await db.rpc("apply_payment_to_invoice", { _payment_id: paymentId });
     if (error) throw new Error(error.message);
+    try {
+      const { notifyPaymentReceived } = await import("./payment-notify.server");
+      await notifyPaymentReceived(db as never, paymentId);
+    } catch {
+      /* notification failures must never fail webhook reconciliation */
+    }
   }
   return { applied: true, status: "success", amount };
 }

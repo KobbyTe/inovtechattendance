@@ -6,6 +6,7 @@ import {
   AlertCircle,
   BadgeCheck,
   Banknote,
+  Bell,
   ChevronDown,
   Loader2,
   Link2,
@@ -40,6 +41,10 @@ import {
   getInvoicePaymentLink,
   reconcilePaystackReference,
 } from "@/lib/checkout.functions";
+import {
+  runPaymentReminderSweepNow,
+  sendInvoiceReminderNow,
+} from "@/lib/payment-notify.functions";
 
 type Installment = { label: string; due_date: string; amount: string };
 
@@ -79,6 +84,8 @@ export function PaymentsTab() {
   const reconcileRef = useServerFn(reconcilePaystackReference);
   const waive = useServerFn(waiveInvoice);
   const sweep = useServerFn(runOverdueSweepNow);
+  const sendReminder = useServerFn(sendInvoiceReminderNow);
+  const reminderSweep = useServerFn(runPaymentReminderSweepNow);
 
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -187,6 +194,21 @@ export function PaymentsTab() {
             }
           >
             <AlertCircle className="h-4 w-4 mr-1" /> Run overdue check
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={busy}
+            onClick={() =>
+              void guard(async () => {
+                const r = (await reminderSweep()) as any;
+                toast.success(
+                  `Reminders: ${r.reminders ?? 0} upcoming, ${r.overdue ?? 0} overdue notice(s) sent`,
+                );
+              })
+            }
+          >
+            <Bell className="h-4 w-4 mr-1" /> Run reminders
           </Button>
           <Button
             variant="outline"
@@ -488,6 +510,27 @@ export function PaymentsTab() {
                             }
                           >
                             <Link2 className="h-4 w-4 mr-1" /> Copy pay link
+                          </Button>
+                        )}
+                        {inv.status !== "waived" && inv.status !== "paid" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={busy}
+                            onClick={() =>
+                              void guard(async () => {
+                                const r = (await sendReminder({
+                                  data: { invoiceId: inv.id },
+                                })) as any;
+                                if (!r.ok) toast.error(r.error ?? "Could not send reminder");
+                                else
+                                  toast.success(
+                                    `Reminder sent to ${r.emails} recipient(s)${r.sms?.ok ? " + SMS" : ""}${r.whatsapp?.ok ? " + WhatsApp" : ""}`,
+                                  );
+                              })
+                            }
+                          >
+                            <Bell className="h-4 w-4 mr-1" /> Send reminder
                           </Button>
                         )}
                         {inv.status !== "waived" && inv.status !== "paid" && (

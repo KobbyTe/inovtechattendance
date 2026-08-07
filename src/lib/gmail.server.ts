@@ -33,12 +33,19 @@ function buildRaw(opts: {
   html: string;
   text: string;
   fromName?: string;
+  attachments?: Array<{ filename: string; mimeType: string; base64: string }>;
 }): string {
   const boundary = `b_${Date.now().toString(36)}`;
+  const outer = `m_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const hasFiles = (opts.attachments ?? []).length > 0;
   const headers: string[] = [`To: ${opts.to}`, `Subject: ${encodeHeader(opts.subject)}`];
   if (opts.fromName) headers.push(`From: ${encodeHeader(opts.fromName)}`);
   headers.push("MIME-Version: 1.0");
-  headers.push(`Content-Type: multipart/alternative; boundary="${boundary}"`);
+  headers.push(
+    hasFiles
+      ? `Content-Type: multipart/mixed; boundary="${outer}"`
+      : `Content-Type: multipart/alternative; boundary="${boundary}"`,
+  );
 
   const textPart = [
     `--${boundary}`,
@@ -56,7 +63,33 @@ function buildRaw(opts: {
     chunk76(b64(opts.html)),
   ].join("\r\n");
 
-  const mime = `${headers.join("\r\n")}\r\n\r\n${textPart}\r\n${htmlPart}\r\n--${boundary}--\r\n`;
+  const bodyAlt = `${textPart}\r\n${htmlPart}\r\n--${boundary}--\r\n`;
+
+  if (!hasFiles) {
+    return b64url(`${headers.join("\r\n")}\r\n\r\n${bodyAlt}`);
+  }
+
+  const altPart = [
+    `--${outer}`,
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    "",
+    bodyAlt,
+  ].join("\r\n");
+
+  const fileParts = (opts.attachments ?? [])
+    .map((a) =>
+      [
+        `--${outer}`,
+        `Content-Type: ${a.mimeType}; name="${a.filename}"`,
+        `Content-Disposition: attachment; filename="${a.filename}"`,
+        `Content-Transfer-Encoding: base64`,
+        "",
+        chunk76(a.base64),
+      ].join("\r\n"),
+    )
+    .join("\r\n");
+
+  const mime = `${headers.join("\r\n")}\r\n\r\n${altPart}\r\n${fileParts}\r\n--${outer}--\r\n`;
   return b64url(mime);
 }
 
@@ -66,6 +99,7 @@ export async function sendGmail(opts: {
   html: string;
   text: string;
   fromName?: string;
+  attachments?: Array<{ filename: string; mimeType: string; base64: string }>;
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
   const GOOGLE_MAIL_API_KEY = process.env.GOOGLE_MAIL_API_KEY;
