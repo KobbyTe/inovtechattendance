@@ -6,6 +6,7 @@ import {
   AlertCircle,
   BadgeCheck,
   Banknote,
+  Bell,
   ChevronDown,
   Loader2,
   Link2,
