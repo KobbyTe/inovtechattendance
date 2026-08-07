@@ -184,11 +184,26 @@ export type Database = {
           google_sheet_id: string | null
           id: string
           last_sheets_sync_at: string | null
+          payment_notify_enabled: boolean
+          payment_overdue_body: string | null
+          payment_overdue_cadence: number[]
+          payment_overdue_sms: string | null
+          payment_overdue_subject: string | null
+          payment_receipt_body: string | null
+          payment_receipt_sms: string | null
+          payment_receipt_subject: string | null
+          payment_reminder_body: string | null
+          payment_reminder_days_before: number
+          payment_reminder_sms: string | null
+          payment_reminder_subject: string | null
           singleton: boolean
           sms_enabled: boolean
           sms_sender_id: string | null
           updated_at: string
           whatsapp_enabled: boolean
+          whatsapp_payment_overdue_template: string | null
+          whatsapp_payment_received_template: string | null
+          whatsapp_payment_reminder_template: string | null
           whatsapp_template_lang: string
           whatsapp_template_name: string | null
         }
@@ -210,11 +225,26 @@ export type Database = {
           google_sheet_id?: string | null
           id?: string
           last_sheets_sync_at?: string | null
+          payment_notify_enabled?: boolean
+          payment_overdue_body?: string | null
+          payment_overdue_cadence?: number[]
+          payment_overdue_sms?: string | null
+          payment_overdue_subject?: string | null
+          payment_receipt_body?: string | null
+          payment_receipt_sms?: string | null
+          payment_receipt_subject?: string | null
+          payment_reminder_body?: string | null
+          payment_reminder_days_before?: number
+          payment_reminder_sms?: string | null
+          payment_reminder_subject?: string | null
           singleton?: boolean
           sms_enabled?: boolean
           sms_sender_id?: string | null
           updated_at?: string
           whatsapp_enabled?: boolean
+          whatsapp_payment_overdue_template?: string | null
+          whatsapp_payment_received_template?: string | null
+          whatsapp_payment_reminder_template?: string | null
           whatsapp_template_lang?: string
           whatsapp_template_name?: string | null
         }
@@ -236,11 +266,26 @@ export type Database = {
           google_sheet_id?: string | null
           id?: string
           last_sheets_sync_at?: string | null
+          payment_notify_enabled?: boolean
+          payment_overdue_body?: string | null
+          payment_overdue_cadence?: number[]
+          payment_overdue_sms?: string | null
+          payment_overdue_subject?: string | null
+          payment_receipt_body?: string | null
+          payment_receipt_sms?: string | null
+          payment_receipt_subject?: string | null
+          payment_reminder_body?: string | null
+          payment_reminder_days_before?: number
+          payment_reminder_sms?: string | null
+          payment_reminder_subject?: string | null
           singleton?: boolean
           sms_enabled?: boolean
           sms_sender_id?: string | null
           updated_at?: string
           whatsapp_enabled?: boolean
+          whatsapp_payment_overdue_template?: string | null
+          whatsapp_payment_received_template?: string | null
+          whatsapp_payment_reminder_template?: string | null
           whatsapp_template_lang?: string
           whatsapp_template_name?: string | null
         }
@@ -408,6 +453,45 @@ export type Database = {
         }
         Relationships: []
       }
+      invoice_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_id: string
+          kind: string
+          payment_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_id: string
+          kind: string
+          payment_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          kind?: string
+          payment_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_notifications_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_notifications_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount_due: number
@@ -466,6 +550,7 @@ export type Database = {
           date: string | null
           error: string | null
           id: string
+          invoice_id: string | null
           kind: string
           provider: string
           provider_message_id: string | null
@@ -482,6 +567,7 @@ export type Database = {
           date?: string | null
           error?: string | null
           id?: string
+          invoice_id?: string | null
           kind?: string
           provider: string
           provider_message_id?: string | null
@@ -498,6 +584,7 @@ export type Database = {
           date?: string | null
           error?: string | null
           id?: string
+          invoice_id?: string | null
           kind?: string
           provider?: string
           provider_message_id?: string | null
@@ -507,7 +594,15 @@ export type Database = {
           student_id?: string | null
           student_name?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notification_log_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_plans: {
         Row: {
