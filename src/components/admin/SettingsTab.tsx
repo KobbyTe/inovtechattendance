@@ -297,6 +297,59 @@ export function SettingsTab() {
     toast.success("SMS / WhatsApp settings saved");
   }
 
+  async function savePayments() {
+    const cadence = pay.payment_overdue_cadence
+      .split(",")
+      .map((s) => Number(s.trim()))
+      .filter((n) => Number.isFinite(n) && n > 0);
+    if (!cadence.length) return toast.error("Enter at least one overdue day, e.g. 1, 7, 14");
+    setSavingPay(true);
+    const { data: existing } = await supabase
+      .from("app_settings")
+      .select("id")
+      .eq("singleton", true)
+      .maybeSingle();
+    const payload = {
+      singleton: true,
+      payment_notify_enabled: pay.payment_notify_enabled,
+      payment_reminder_days_before: Number(pay.payment_reminder_days_before) || 0,
+      payment_overdue_cadence: cadence,
+      payment_receipt_subject: pay.payment_receipt_subject.trim() || null,
+      payment_receipt_body: pay.payment_receipt_body.trim() || null,
+      payment_reminder_subject: pay.payment_reminder_subject.trim() || null,
+      payment_reminder_body: pay.payment_reminder_body.trim() || null,
+      payment_overdue_subject: pay.payment_overdue_subject.trim() || null,
+      payment_overdue_body: pay.payment_overdue_body.trim() || null,
+      payment_receipt_sms: pay.payment_receipt_sms.trim() || null,
+      payment_reminder_sms: pay.payment_reminder_sms.trim() || null,
+      payment_overdue_sms: pay.payment_overdue_sms.trim() || null,
+      whatsapp_payment_received_template: pay.whatsapp_payment_received_template.trim() || null,
+      whatsapp_payment_reminder_template: pay.whatsapp_payment_reminder_template.trim() || null,
+      whatsapp_payment_overdue_template: pay.whatsapp_payment_overdue_template.trim() || null,
+      updated_at: new Date().toISOString(),
+    } as never;
+    const { error } = existing
+      ? await supabase.from("app_settings").update(payload).eq("id", existing.id)
+      : await supabase.from("app_settings").insert(payload);
+    setSavingPay(false);
+    if (error) return toast.error(error.message);
+    toast.success("Payment notification settings saved");
+  }
+
+  async function runSweep() {
+    setSweeping(true);
+    try {
+      const res = await sweepFn({});
+      if ("skipped" in res && res.skipped) toast.info("Payment notifications are disabled");
+      else toast.success(`Sweep done — ${res.reminders} reminder(s), ${res.overdue} overdue notice(s)`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Sweep failed");
+    } finally {
+      setSweeping(false);
+    }
+  }
+
+
   async function sendTest(channel: "sms" | "whatsapp") {
     if (!testPhone.trim()) return toast.error("Enter a phone number to test");
     setTesting(channel);
