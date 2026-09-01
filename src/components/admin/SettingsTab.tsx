@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { syncToGoogleSheets } from "@/lib/sheets.functions";
 import { sendTestGuardianMessage } from "@/lib/messaging.functions";
-import { ExternalLink, ImagePlus, Mail, MessageSquare, RefreshCw, Sheet, Trash2 } from "lucide-react";
+import { runPaymentReminderSweepNow } from "@/lib/payment-notify.functions";
+import { CreditCard, ExternalLink, ImagePlus, Mail, MessageSquare, RefreshCw, Sheet, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 function extractSheetId(input: string): string {
