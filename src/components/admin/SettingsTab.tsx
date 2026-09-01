@@ -685,6 +685,133 @@ export function SettingsTab() {
 
       <section className="rounded-xl bg-card border border-border p-5">
         <div className="flex items-center gap-2">
+          <CreditCard className="h-5 w-5 text-primary" />
+          <h3 className="text-base font-semibold">Payment notifications</h3>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1">
+          Receipts go out the moment a payment is confirmed (PDF attached). Reminders go out before
+          the due date, and overdue notices follow the cadence below — once per milestone.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-1.5 text-xs">
+          {[
+            "{{greeting}}",
+            "{{studentName}}",
+            "{{installment}}",
+            "{{planName}}",
+            "{{amount}}",
+            "{{balance}}",
+            "{{dueDate}}",
+            "{{daysOverdue}}",
+            "{{paidAt}}",
+            "{{channel}}",
+            "{{payLink}}",
+          ].map((t) => (
+            <code key={t} className="rounded bg-muted px-1.5 py-0.5 font-mono">{t}</code>
+          ))}
+        </div>
+        <div className="space-y-4 mt-4">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-primary"
+              checked={pay.payment_notify_enabled}
+              onChange={(e) => setPay({ ...pay, payment_notify_enabled: e.target.checked })}
+            />
+            Enable payment receipts, reminders and overdue notices
+          </label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Remind this many days before the due date</Label>
+              <Input
+                type="number"
+                min={0}
+                max={30}
+                value={pay.payment_reminder_days_before}
+                onChange={(e) =>
+                  setPay({ ...pay, payment_reminder_days_before: Number(e.target.value) })
+                }
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Overdue follow-up days</Label>
+              <Input
+                value={pay.payment_overdue_cadence}
+                placeholder="1, 7, 14"
+                onChange={(e) => setPay({ ...pay, payment_overdue_cadence: e.target.value })}
+                className="h-11"
+              />
+            </div>
+          </div>
+
+          {(
+            [
+              ["Receipt", "payment_receipt_subject", "payment_receipt_body", "payment_receipt_sms", "whatsapp_payment_received_template"],
+              ["Upcoming reminder", "payment_reminder_subject", "payment_reminder_body", "payment_reminder_sms", "whatsapp_payment_reminder_template"],
+              ["Overdue notice", "payment_overdue_subject", "payment_overdue_body", "payment_overdue_sms", "whatsapp_payment_overdue_template"],
+            ] as const
+          ).map(([title, subjKey, bodyKey, smsKey, waKey]) => (
+            <div key={title} className="rounded-lg border border-border p-4 space-y-3 bg-muted/20">
+              <h4 className="text-sm font-semibold">{title}</h4>
+              <div className="space-y-2">
+                <Label>Email subject</Label>
+                <Input
+                  value={pay[subjKey]}
+                  onChange={(e) => setPay({ ...pay, [subjKey]: e.target.value })}
+                  className="h-11"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Email body</Label>
+                <Textarea
+                  value={pay[bodyKey]}
+                  onChange={(e) => setPay({ ...pay, [bodyKey]: e.target.value })}
+                  rows={5}
+                />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>SMS text</Label>
+                  <Textarea
+                    value={pay[smsKey]}
+                    onChange={(e) => setPay({ ...pay, [smsKey]: e.target.value })}
+                    rows={3}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {pay[smsKey].length} characters
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>WhatsApp template name</Label>
+                  <Input
+                    value={pay[waKey]}
+                    placeholder="payment_notice"
+                    onChange={(e) => setPay({ ...pay, [waKey]: e.target.value })}
+                    className="h-11"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Leave empty to skip WhatsApp for this notice.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={savePayments} disabled={savingPay} className="h-11">
+              {savingPay ? "Saving…" : "Save payment notifications"}
+            </Button>
+            <Button variant="outline" onClick={runSweep} disabled={sweeping} className="h-11">
+              <RefreshCw className={`mr-2 h-4 w-4 ${sweeping ? "animate-spin" : ""}`} />
+              {sweeping ? "Running…" : "Run reminders now"}
+            </Button>
+          </div>
+        </div>
+      </section>
+
+
+      <section className="rounded-xl bg-card border border-border p-5">
+        <div className="flex items-center gap-2">
           <Sheet className="h-5 w-5 text-primary" />
           <h3 className="text-base font-semibold">Google Sheets sync</h3>
         </div>
