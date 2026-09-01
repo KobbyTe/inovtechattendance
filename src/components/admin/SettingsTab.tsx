@@ -161,7 +161,25 @@ export function SettingsTab() {
             clockout_guardian_subject: data.clockout_guardian_subject ?? prev.clockout_guardian_subject,
             clockout_guardian_body: data.clockout_guardian_body ?? prev.clockout_guardian_body,
           }));
+          const d = data as unknown as Record<string, unknown>;
+          setPay((prev) => {
+            const next = { ...prev };
+            for (const k of Object.keys(prev) as Array<keyof typeof prev>) {
+              const v = d[k as string];
+              if (k === "payment_overdue_cadence") {
+                if (Array.isArray(v) && v.length) next[k] = v.join(", ") as never;
+              } else if (k === "payment_notify_enabled") {
+                if (typeof v === "boolean") next[k] = v as never;
+              } else if (k === "payment_reminder_days_before") {
+                if (typeof v === "number") next[k] = v as never;
+              } else if (typeof v === "string" && v) {
+                next[k] = v as never;
+              }
+            }
+            return next;
+          });
         }
+
       });
   }, []);
 
