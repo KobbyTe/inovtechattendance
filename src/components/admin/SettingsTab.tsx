@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { syncToGoogleSheets } from "@/lib/sheets.functions";
 import { sendTestGuardianMessage } from "@/lib/messaging.functions";
-import { ExternalLink, ImagePlus, Mail, MessageSquare, RefreshCw, Sheet, Trash2 } from "lucide-react";
+import { runPaymentReminderSweepNow } from "@/lib/payment-notify.functions";
+import { CreditCard, ExternalLink, ImagePlus, Mail, MessageSquare, RefreshCw, Sheet, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 function extractSheetId(input: string): string {
@@ -89,16 +90,45 @@ export function SettingsTab() {
   const [testing, setTesting] = useState<"sms" | "whatsapp" | null>(null);
   const testMsgFn = useServerFn(sendTestGuardianMessage);
 
+  const PAY_DEFAULTS = {
+    payment_notify_enabled: true,
+    payment_reminder_days_before: 3,
+    payment_overdue_cadence: "1, 7, 14",
+    payment_receipt_subject: "Payment received — {{amount}} for {{installment}}",
+    payment_receipt_body:
+      "{{greeting}}\n\nWe have received {{amount}} for {{installment}} ({{planName}}).\n\nRemaining balance on this installment: {{balance}}.\nPaid on {{paidAt}} via {{channel}}.\n\nYour receipt is attached as a PDF.",
+    payment_reminder_subject: "Reminder: {{installment}} of {{balance}} is due {{dueDate}}",
+    payment_reminder_body:
+      "{{greeting}}\n\nThis is a reminder that {{installment}} ({{planName}}) of {{balance}} is due on {{dueDate}}.\n\nYou can pay online using this link:\n{{payLink}}",
+    payment_overdue_subject: "Overdue: {{installment}} — {{balance}} outstanding",
+    payment_overdue_body:
+      "{{greeting}}\n\n{{installment}} ({{planName}}) of {{balance}} was due on {{dueDate}} and is now {{daysOverdue}} day(s) overdue.\n\nYou can settle it online here:\n{{payLink}}\n\nIf you have already paid, please ignore this message.",
+    payment_receipt_sms:
+      "Inovtech: payment of {{amount}} received for {{installment}}. Balance: {{balance}}. Thank you.",
+    payment_reminder_sms:
+      "Inovtech: {{installment}} of {{balance}} for {{studentName}} is due on {{dueDate}}. Pay: {{payLink}}",
+    payment_overdue_sms:
+      "Inovtech: {{installment}} of {{balance}} for {{studentName}} was due {{dueDate}} ({{daysOverdue}} day(s) overdue). Pay: {{payLink}}",
+    whatsapp_payment_received_template: "",
+    whatsapp_payment_reminder_template: "",
+    whatsapp_payment_overdue_template: "",
+  };
+  const [pay, setPay] = useState(PAY_DEFAULTS);
+  const [savingPay, setSavingPay] = useState(false);
+  const [sweeping, setSweeping] = useState(false);
+  const sweepFn = useServerFn(runPaymentReminderSweepNow);
+
   const [savingTpl, setSavingTpl] = useState(false);
   const [savingClock, setSavingClock] = useState(false);
   const [uploadingHeader, setUploadingHeader] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+
   useEffect(() => {
     supabase
       .from("app_settings")
       .select(
-        "google_sheet_id,last_sheets_sync_at,email_subject,email_body,email_header_image_url,email_signature,clockin_student_subject,clockin_student_body,clockin_guardian_subject,clockin_guardian_body,clockout_student_subject,clockout_student_body,clockout_guardian_subject,clockout_guardian_body,sms_enabled,whatsapp_enabled,sms_sender_id,absence_sms_template,whatsapp_template_name,whatsapp_template_lang",
+        "google_sheet_id,last_sheets_sync_at,email_subject,email_body,email_header_image_url,email_signature,clockin_student_subject,clockin_student_body,clockin_guardian_subject,clockin_guardian_body,clockout_student_subject,clockout_student_body,clockout_guardian_subject,clockout_guardian_body,sms_enabled,whatsapp_enabled,sms_sender_id,absence_sms_template,whatsapp_template_name,whatsapp_template_lang,payment_notify_enabled,payment_reminder_days_before,payment_overdue_cadence,payment_receipt_subject,payment_receipt_body,payment_reminder_subject,payment_reminder_body,payment_overdue_subject,payment_overdue_body,payment_receipt_sms,payment_reminder_sms,payment_overdue_sms,whatsapp_payment_received_template,whatsapp_payment_reminder_template,whatsapp_payment_overdue_template",
       )
       .eq("singleton", true)
       .maybeSingle()
@@ -131,7 +161,25 @@ export function SettingsTab() {
             clockout_guardian_subject: data.clockout_guardian_subject ?? prev.clockout_guardian_subject,
             clockout_guardian_body: data.clockout_guardian_body ?? prev.clockout_guardian_body,
           }));
+          const d = data as unknown as Record<string, unknown>;
+          setPay((prev) => {
+            const next = { ...prev };
+            for (const k of Object.keys(prev) as Array<keyof typeof prev>) {
+              const v = d[k as string];
+              if (k === "payment_overdue_cadence") {
+                if (Array.isArray(v) && v.length) next[k] = v.join(", ") as never;
+              } else if (k === "payment_notify_enabled") {
+                if (typeof v === "boolean") next[k] = v as never;
+              } else if (k === "payment_reminder_days_before") {
+                if (typeof v === "number") next[k] = v as never;
+              } else if (typeof v === "string" && v) {
+                next[k] = v as never;
+              }
+            }
+            return next;
+          });
         }
+
       });
   }, []);
 
@@ -248,6 +296,59 @@ export function SettingsTab() {
     if (error) return toast.error(error.message);
     toast.success("SMS / WhatsApp settings saved");
   }
+
+  async function savePayments() {
+    const cadence = pay.payment_overdue_cadence
+      .split(",")
+      .map((s) => Number(s.trim()))
+      .filter((n) => Number.isFinite(n) && n > 0);
+    if (!cadence.length) return toast.error("Enter at least one overdue day, e.g. 1, 7, 14");
+    setSavingPay(true);
+    const { data: existing } = await supabase
+      .from("app_settings")
+      .select("id")
+      .eq("singleton", true)
+      .maybeSingle();
+    const payload = {
+      singleton: true,
+      payment_notify_enabled: pay.payment_notify_enabled,
+      payment_reminder_days_before: Number(pay.payment_reminder_days_before) || 0,
+      payment_overdue_cadence: cadence,
+      payment_receipt_subject: pay.payment_receipt_subject.trim() || null,
+      payment_receipt_body: pay.payment_receipt_body.trim() || null,
+      payment_reminder_subject: pay.payment_reminder_subject.trim() || null,
+      payment_reminder_body: pay.payment_reminder_body.trim() || null,
+      payment_overdue_subject: pay.payment_overdue_subject.trim() || null,
+      payment_overdue_body: pay.payment_overdue_body.trim() || null,
+      payment_receipt_sms: pay.payment_receipt_sms.trim() || null,
+      payment_reminder_sms: pay.payment_reminder_sms.trim() || null,
+      payment_overdue_sms: pay.payment_overdue_sms.trim() || null,
+      whatsapp_payment_received_template: pay.whatsapp_payment_received_template.trim() || null,
+      whatsapp_payment_reminder_template: pay.whatsapp_payment_reminder_template.trim() || null,
+      whatsapp_payment_overdue_template: pay.whatsapp_payment_overdue_template.trim() || null,
+      updated_at: new Date().toISOString(),
+    } as never;
+    const { error } = existing
+      ? await supabase.from("app_settings").update(payload).eq("id", existing.id)
+      : await supabase.from("app_settings").insert(payload);
+    setSavingPay(false);
+    if (error) return toast.error(error.message);
+    toast.success("Payment notification settings saved");
+  }
+
+  async function runSweep() {
+    setSweeping(true);
+    try {
+      const res = await sweepFn({});
+      if ("skipped" in res && res.skipped) toast.info("Payment notifications are disabled");
+      else toast.success(`Sweep done — ${res.reminders} reminder(s), ${res.overdue} overdue notice(s)`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Sweep failed");
+    } finally {
+      setSweeping(false);
+    }
+  }
+
 
   async function sendTest(channel: "sms" | "whatsapp") {
     if (!testPhone.trim()) return toast.error("Enter a phone number to test");
@@ -581,6 +682,133 @@ export function SettingsTab() {
           </div>
         </div>
       </section>
+
+      <section className="rounded-xl bg-card border border-border p-5">
+        <div className="flex items-center gap-2">
+          <CreditCard className="h-5 w-5 text-primary" />
+          <h3 className="text-base font-semibold">Payment notifications</h3>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1">
+          Receipts go out the moment a payment is confirmed (PDF attached). Reminders go out before
+          the due date, and overdue notices follow the cadence below — once per milestone.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-1.5 text-xs">
+          {[
+            "{{greeting}}",
+            "{{studentName}}",
+            "{{installment}}",
+            "{{planName}}",
+            "{{amount}}",
+            "{{balance}}",
+            "{{dueDate}}",
+            "{{daysOverdue}}",
+            "{{paidAt}}",
+            "{{channel}}",
+            "{{payLink}}",
+          ].map((t) => (
+            <code key={t} className="rounded bg-muted px-1.5 py-0.5 font-mono">{t}</code>
+          ))}
+        </div>
+        <div className="space-y-4 mt-4">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-primary"
+              checked={pay.payment_notify_enabled}
+              onChange={(e) => setPay({ ...pay, payment_notify_enabled: e.target.checked })}
+            />
+            Enable payment receipts, reminders and overdue notices
+          </label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Remind this many days before the due date</Label>
+              <Input
+                type="number"
+                min={0}
+                max={30}
+                value={pay.payment_reminder_days_before}
+                onChange={(e) =>
+                  setPay({ ...pay, payment_reminder_days_before: Number(e.target.value) })
+                }
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Overdue follow-up days</Label>
+              <Input
+                value={pay.payment_overdue_cadence}
+                placeholder="1, 7, 14"
+                onChange={(e) => setPay({ ...pay, payment_overdue_cadence: e.target.value })}
+                className="h-11"
+              />
+            </div>
+          </div>
+
+          {(
+            [
+              ["Receipt", "payment_receipt_subject", "payment_receipt_body", "payment_receipt_sms", "whatsapp_payment_received_template"],
+              ["Upcoming reminder", "payment_reminder_subject", "payment_reminder_body", "payment_reminder_sms", "whatsapp_payment_reminder_template"],
+              ["Overdue notice", "payment_overdue_subject", "payment_overdue_body", "payment_overdue_sms", "whatsapp_payment_overdue_template"],
+            ] as const
+          ).map(([title, subjKey, bodyKey, smsKey, waKey]) => (
+            <div key={title} className="rounded-lg border border-border p-4 space-y-3 bg-muted/20">
+              <h4 className="text-sm font-semibold">{title}</h4>
+              <div className="space-y-2">
+                <Label>Email subject</Label>
+                <Input
+                  value={pay[subjKey]}
+                  onChange={(e) => setPay({ ...pay, [subjKey]: e.target.value })}
+                  className="h-11"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Email body</Label>
+                <Textarea
+                  value={pay[bodyKey]}
+                  onChange={(e) => setPay({ ...pay, [bodyKey]: e.target.value })}
+                  rows={5}
+                />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>SMS text</Label>
+                  <Textarea
+                    value={pay[smsKey]}
+                    onChange={(e) => setPay({ ...pay, [smsKey]: e.target.value })}
+                    rows={3}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {pay[smsKey].length} characters
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>WhatsApp template name</Label>
+                  <Input
+                    value={pay[waKey]}
+                    placeholder="payment_notice"
+                    onChange={(e) => setPay({ ...pay, [waKey]: e.target.value })}
+                    className="h-11"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Leave empty to skip WhatsApp for this notice.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={savePayments} disabled={savingPay} className="h-11">
+              {savingPay ? "Saving…" : "Save payment notifications"}
+            </Button>
+            <Button variant="outline" onClick={runSweep} disabled={sweeping} className="h-11">
+              <RefreshCw className={`mr-2 h-4 w-4 ${sweeping ? "animate-spin" : ""}`} />
+              {sweeping ? "Running…" : "Run reminders now"}
+            </Button>
+          </div>
+        </div>
+      </section>
+
 
       <section className="rounded-xl bg-card border border-border p-5">
         <div className="flex items-center gap-2">
