@@ -89,10 +89,39 @@ export function SettingsTab() {
   const [testing, setTesting] = useState<"sms" | "whatsapp" | null>(null);
   const testMsgFn = useServerFn(sendTestGuardianMessage);
 
+  const PAY_DEFAULTS = {
+    payment_notify_enabled: true,
+    payment_reminder_days_before: 3,
+    payment_overdue_cadence: "1, 7, 14",
+    payment_receipt_subject: "Payment received — {{amount}} for {{installment}}",
+    payment_receipt_body:
+      "{{greeting}}\n\nWe have received {{amount}} for {{installment}} ({{planName}}).\n\nRemaining balance on this installment: {{balance}}.\nPaid on {{paidAt}} via {{channel}}.\n\nYour receipt is attached as a PDF.",
+    payment_reminder_subject: "Reminder: {{installment}} of {{balance}} is due {{dueDate}}",
+    payment_reminder_body:
+      "{{greeting}}\n\nThis is a reminder that {{installment}} ({{planName}}) of {{balance}} is due on {{dueDate}}.\n\nYou can pay online using this link:\n{{payLink}}",
+    payment_overdue_subject: "Overdue: {{installment}} — {{balance}} outstanding",
+    payment_overdue_body:
+      "{{greeting}}\n\n{{installment}} ({{planName}}) of {{balance}} was due on {{dueDate}} and is now {{daysOverdue}} day(s) overdue.\n\nYou can settle it online here:\n{{payLink}}\n\nIf you have already paid, please ignore this message.",
+    payment_receipt_sms:
+      "Inovtech: payment of {{amount}} received for {{installment}}. Balance: {{balance}}. Thank you.",
+    payment_reminder_sms:
+      "Inovtech: {{installment}} of {{balance}} for {{studentName}} is due on {{dueDate}}. Pay: {{payLink}}",
+    payment_overdue_sms:
+      "Inovtech: {{installment}} of {{balance}} for {{studentName}} was due {{dueDate}} ({{daysOverdue}} day(s) overdue). Pay: {{payLink}}",
+    whatsapp_payment_received_template: "",
+    whatsapp_payment_reminder_template: "",
+    whatsapp_payment_overdue_template: "",
+  };
+  const [pay, setPay] = useState(PAY_DEFAULTS);
+  const [savingPay, setSavingPay] = useState(false);
+  const [sweeping, setSweeping] = useState(false);
+  const sweepFn = useServerFn(runPaymentReminderSweepNow);
+
   const [savingTpl, setSavingTpl] = useState(false);
   const [savingClock, setSavingClock] = useState(false);
   const [uploadingHeader, setUploadingHeader] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
 
   useEffect(() => {
     supabase
