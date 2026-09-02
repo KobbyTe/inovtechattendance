@@ -15,6 +15,7 @@ import { Route as KioskRouteImport } from './routes/kiosk'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as PayPortalRouteImport } from './routes/pay.portal'
 import { Route as PayReturnRouteImport } from './routes/pay.return'
 import { Route as ProgramsSlugRouteImport } from './routes/programs.$slug'
 import { Route as ApiPublicCheckoutVerifyRouteImport } from './routes/api/public/checkout-verify'
@@ -56,6 +57,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin/login',
   path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PayPortalRoute = PayPortalRouteImport.update({
+  id: '/pay/portal',
+  path: '/pay/portal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PayReturnRoute = PayReturnRouteImport.update({
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/kiosk': typeof KioskRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/pay/portal': typeof PayPortalRoute
   '/pay/return': typeof PayReturnRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
   '/kiosk': typeof KioskRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/pay/portal': typeof PayPortalRoute
   '/pay/return': typeof PayReturnRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/admin': typeof AdminIndexRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/kiosk': typeof KioskRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/pay/portal': typeof PayPortalRoute
   '/pay/return': typeof PayReturnRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/kiosk'
     | '/unsubscribe'
     | '/admin/login'
+    | '/pay/portal'
     | '/pay/return'
     | '/programs/$slug'
     | '/admin/'
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
     | '/kiosk'
     | '/unsubscribe'
     | '/admin/login'
+    | '/pay/portal'
     | '/pay/return'
     | '/programs/$slug'
     | '/admin'
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/kiosk'
     | '/unsubscribe'
     | '/admin/login'
+    | '/pay/portal'
     | '/pay/return'
     | '/programs/$slug'
     | '/admin/'
@@ -256,6 +268,7 @@ export interface RootRouteChildren {
   KioskRoute: typeof KioskRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   AdminLoginRoute: typeof AdminLoginRoute
+  PayPortalRoute: typeof PayPortalRoute
   PayReturnRoute: typeof PayReturnRoute
   ProgramsSlugRoute: typeof ProgramsSlugRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -313,6 +326,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/login'
       fullPath: '/admin/login'
       preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pay/portal': {
+      id: '/pay/portal'
+      path: '/pay/portal'
+      fullPath: '/pay/portal'
+      preLoaderRoute: typeof PayPortalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pay/return': {
@@ -408,6 +428,7 @@ const rootRouteChildren: RootRouteChildren = {
   KioskRoute: KioskRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   AdminLoginRoute: AdminLoginRoute,
+  PayPortalRoute: PayPortalRoute,
   PayReturnRoute: PayReturnRoute,
   ProgramsSlugRoute: ProgramsSlugRoute,
   AdminIndexRoute: AdminIndexRoute,
