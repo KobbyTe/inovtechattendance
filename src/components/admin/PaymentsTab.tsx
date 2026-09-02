@@ -82,6 +82,7 @@ export function PaymentsTab() {
   const unassign = useServerFn(unassignStudentPlan);
   const recordPay = useServerFn(recordManualPayment);
   const payLink = useServerFn(getInvoicePaymentLink);
+  const portalLink = useServerFn(getStudentPortalLink);
   const reconcileRef = useServerFn(reconcilePaystackReference);
   const waive = useServerFn(waiveInvoice);
   const sweep = useServerFn(runOverdueSweepNow);
