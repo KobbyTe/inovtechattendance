@@ -41,6 +41,7 @@ import {
   getInvoicePaymentLink,
   reconcilePaystackReference,
 } from "@/lib/checkout.functions";
+import { getStudentPortalLink } from "@/lib/portal.functions";
 import {
   runPaymentReminderSweepNow,
   sendInvoiceReminderNow,
@@ -393,6 +394,27 @@ export function PaymentsTab() {
 
               {open && (
                 <div className="px-3 pb-4 space-y-3 bg-muted/20">
+                  <div className="pt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() =>
+                        void guard(async () => {
+                          const r = (await portalLink({
+                            data: {
+                              studentId: row.student.id,
+                              origin: window.location.origin,
+                            },
+                          })) as any;
+                          await navigator.clipboard.writeText(r.url).catch(() => undefined);
+                          toast.success(`Portal link copied for ${r.studentName}`);
+                        })
+                      }
+                    >
+                      <Link2 className="h-4 w-4 mr-1" /> Copy portal link
+                    </Button>
+                  </div>
                   {/* assign per student */}
                   {!row.studentPlanId && cohortPlans.length > 0 && (
                     <div className="flex flex-wrap gap-2 pt-2">
