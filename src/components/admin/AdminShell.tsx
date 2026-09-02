@@ -1,23 +1,25 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   BarChart2,
   Calendar,
   CalendarX,
   CalendarCheck,
-  GraduationCap,
   Layers,
   LogOut,
   Megaphone,
+  Moon,
   QrCode,
   Settings,
   Star,
   Sparkles,
+  Sun,
   Users,
   Wallet,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
+import logoInovtech from "@/assets/logo-inovtech.png";
 
 export type AdminTab =
   | "dashboard"
@@ -48,6 +50,26 @@ const TABS: { id: AdminTab; label: string; icon: typeof BarChart2 }[] = [
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
+function useDarkMode() {
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("inovtech-admin-theme");
+    const isDark = stored === "dark";
+    setDark(isDark);
+    document.documentElement.classList.toggle("dark", isDark);
+  }, []);
+
+  function toggle() {
+    const next = !dark;
+    setDark(next);
+    localStorage.setItem("inovtech-admin-theme", next ? "dark" : "light");
+    document.documentElement.classList.toggle("dark", next);
+  }
+
+  return { dark, toggle };
+}
+
 export function AdminShell({
   tab,
   setTab,
@@ -58,89 +80,127 @@ export function AdminShell({
   children: ReactNode;
 }) {
   const navigate = useNavigate();
+  const { dark, toggle } = useDarkMode();
+  const active = TABS.find((t) => t.id === tab);
 
   async function signOut() {
     await supabase.auth.signOut();
     navigate({ to: "/admin/login" });
   }
 
+  const today = new Date().toLocaleDateString(undefined, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-60 shrink-0 flex-col bg-card border-r border-border">
-        <div className="p-4 border-b border-border flex items-center gap-2">
-          <div className="h-9 w-9 rounded-lg bg-accent flex items-center justify-center">
-            <GraduationCap className="h-5 w-5 text-primary" />
+    <div className="admin-theme min-h-screen bg-rail text-foreground">
+      <div className="flex min-h-screen">
+        {/* Charcoal icon rail */}
+        <aside className="hidden md:flex w-[76px] shrink-0 flex-col items-center gap-1 bg-rail py-5">
+          <div className="mb-4 h-10 w-10 overflow-hidden rounded-xl bg-white p-1.5">
+            <img
+              src={logoInovtech}
+              alt="Inovtech logo"
+              className="h-full w-full object-contain"
+            />
           </div>
-          <div className="min-w-0">
-            <p className="text-sm font-bold text-primary leading-tight">Inovtech</p>
-            <p className="text-[10px] text-muted-foreground leading-tight">Admin Panel</p>
+          <nav className="flex flex-1 flex-col items-center gap-1.5">
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                title={t.label}
+                aria-label={t.label}
+                aria-current={tab === t.id ? "page" : undefined}
+                className={cn(
+                  "grid h-11 w-11 place-items-center rounded-2xl transition-colors",
+                  tab === t.id
+                    ? "bg-primary text-primary-foreground"
+                    : "text-rail-muted hover:bg-white/10 hover:text-rail-foreground",
+                )}
+              >
+                <t.icon className="h-[18px] w-[18px]" />
+              </button>
+            ))}
+          </nav>
+          <button
+            onClick={signOut}
+            title="Sign out"
+            aria-label="Sign out"
+            className="grid h-11 w-11 place-items-center rounded-2xl text-rail-muted transition-colors hover:bg-white/10 hover:text-rail-foreground"
+          >
+            <LogOut className="h-[18px] w-[18px]" />
+          </button>
+        </aside>
+
+        {/* Main rounded canvas */}
+        <div className="flex min-w-0 flex-1 flex-col md:py-4 md:pr-4">
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-background md:rounded-[28px]">
+            <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 sm:px-6 sm:flex sm:justify-between">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-card p-1.5 admin-soft md:hidden">
+                  <img
+                    src={logoInovtech}
+                    alt="Inovtech logo"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-lg font-bold leading-tight sm:text-xl">
+                    {active?.label ?? "Dashboard"}{" "}
+                    <span className="align-middle">👋</span>
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    Inovtech Future Skills Bootcamp · {today}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  onClick={toggle}
+                  aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+                  className="grid h-10 w-10 place-items-center rounded-full bg-card text-muted-foreground admin-soft transition-colors hover:text-foreground"
+                >
+                  {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                </button>
+                <button
+                  onClick={signOut}
+                  className="flex h-10 items-center gap-2 rounded-full bg-rail px-3 text-xs font-semibold text-rail-foreground transition-opacity hover:opacity-90 sm:px-4 sm:text-sm"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span className="hidden sm:inline">Sign out</span>
+                </button>
+              </div>
+            </header>
+
+            <main className="flex-1 overflow-auto px-4 pb-24 sm:px-6 md:pb-8">
+              <div className="mx-auto w-full max-w-5xl">{children}</div>
+            </main>
           </div>
         </div>
-        <nav className="flex-1 p-2 space-y-1">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={cn(
-                "w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
-                tab === t.id
-                  ? "bg-primary text-primary-foreground"
-                  : "text-foreground hover:bg-accent"
-              )}
-            >
-              <t.icon className="h-4 w-4" /> {t.label}
-            </button>
-          ))}
-        </nav>
-        <button
-          onClick={signOut}
-          className="m-2 flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-accent"
-        >
-          <LogOut className="h-4 w-4" /> Sign out
-        </button>
-      </aside>
-
-      {/* Mobile header */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="md:hidden bg-card border-b border-border px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-accent flex items-center justify-center">
-              <GraduationCap className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-primary leading-tight">Inovtech Admin</p>
-              <p className="text-[10px] text-muted-foreground leading-tight">
-                {TABS.find((t) => t.id === tab)?.label}
-              </p>
-            </div>
-          </div>
-          <button onClick={signOut} className="text-muted-foreground p-2">
-            <LogOut className="h-5 w-5" />
-          </button>
-        </header>
-
-        <main className="flex-1 overflow-auto pb-20 md:pb-6">
-          <div className="mx-auto w-full max-w-5xl px-4 py-5">{children}</div>
-        </main>
-
-        {/* Mobile bottom tab bar */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border grid grid-cols-6 z-50">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 py-2 min-h-[56px] text-[10px] font-medium",
-                tab === t.id ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              <t.icon className="h-5 w-5" />
-              {t.label}
-            </button>
-          ))}
-        </nav>
       </div>
+
+      {/* Mobile bottom rail */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 grid grid-cols-6 bg-rail px-1 pb-1 pt-1 md:hidden">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={cn(
+              "flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-2xl text-[10px] font-medium transition-colors",
+              tab === t.id
+                ? "bg-primary text-primary-foreground"
+                : "text-rail-muted",
+            )}
+          >
+            <t.icon className="h-[18px] w-[18px]" />
+            {t.label}
+          </button>
+        ))}
+      </nav>
     </div>
   );
 }
