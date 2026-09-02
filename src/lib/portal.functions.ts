@@ -85,7 +85,15 @@ export const getPortalInvoices = createServerFn({ method: "POST" })
       if (plan?.currency) currency = plan.currency;
     }
 
-    const rows = (invoices ?? []).map((i: any) => ({
+    type Row = {
+      id: string;
+      label: string;
+      amountDue: number;
+      balance: number;
+      dueDate: string;
+      status: string;
+    };
+    const rows: Row[] = (invoices ?? []).map((i: any) => ({
       id: i.id as string,
       label: i.installment_label as string,
       amountDue: Number(i.amount_due),
