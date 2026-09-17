@@ -75,7 +75,7 @@ function Index() {
       </div>
 
       {/* Header */}
-      <header className="relative z-10 px-4 pt-6 pb-2">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-rail/70 px-4 py-3 backdrop-blur-xl">
         <div className="mx-auto max-w-xl flex items-center gap-3">
           <div className="h-12 w-12 rounded-xl bg-white flex items-center justify-center shrink-0 overflow-hidden p-1">
             <img src={logoInovtech} alt="Inovtech logo" className="h-full w-full object-contain" />

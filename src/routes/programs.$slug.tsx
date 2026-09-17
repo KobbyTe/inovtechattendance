@@ -32,7 +32,7 @@ export const Route = createFileRoute("/programs/$slug")({
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
+      <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-md">
         <div className="mx-auto max-w-3xl px-4 py-4 flex items-center gap-2">
           <div className="h-9 w-9 rounded-lg bg-accent flex items-center justify-center">
             <GraduationCap className="h-5 w-5 text-primary" />
