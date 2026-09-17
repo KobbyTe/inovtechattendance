@@ -138,7 +138,7 @@ export function AdminShell({
         {/* Main rounded canvas */}
         <div className="flex min-w-0 flex-1 flex-col md:py-4 md:pr-4">
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-background md:rounded-[28px]">
-            <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 sm:px-6 sm:flex sm:justify-between">
+            <header className="sticky top-0 z-40 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-background/95 px-4 py-4 backdrop-blur-md sm:flex sm:justify-between sm:px-6">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-card p-1.5 admin-soft md:hidden">
                   <img
