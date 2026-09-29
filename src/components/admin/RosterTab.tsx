@@ -235,6 +235,10 @@ export function RosterTab() {
               <SheetTitle>Add a student</SheetTitle>
             </SheetHeader>
             <form onSubmit={addStudent} className="space-y-4 mt-6">
+              <PassportPhotoInput
+                value={form.photo_url}
+                onChange={(v) => setForm({ ...form, photo_url: v })}
+              />
               <div className="space-y-2">
                 <Label>Full name</Label>
                 <Input
