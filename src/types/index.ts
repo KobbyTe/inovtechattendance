@@ -11,6 +11,7 @@ export interface Student {
   rfid_uid: string | null;
   guardian_phone: string | null;
   guardian_msg_opt_out: boolean;
+  photo_url?: string | null;
 }
 
 export interface AttendanceRecord {
