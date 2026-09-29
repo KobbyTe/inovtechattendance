@@ -22,6 +22,7 @@ type StudentLite = {
   student_id: string;
   year_level: string;
   cohort_id: string | null;
+  photo_url?: string | null;
 };
 type CohortLite = { id: string; name: string; color: string };
 
@@ -271,17 +272,26 @@ export function ClockInForm({ token }: { token: string }) {
             {/* Identity card */}
             {student && (
               <div className="glass-strong rounded-2xl p-5 flex items-center gap-4">
-                <div
-                  className="h-[72px] w-[72px] rounded-full flex items-center justify-center text-2xl font-bold text-white shrink-0"
-                  style={{
-                    background:
-                      "radial-gradient(circle at 30% 30%, #60A5FA, #2563EB)",
-                    boxShadow:
-                      "0 0 30px rgba(96,165,250,0.6), inset 0 1px 0 rgba(255,255,255,0.4)",
-                  }}
-                >
-                  {initials(student.full_name)}
-                </div>
+                {student.photo_url ? (
+                  <img
+                    src={student.photo_url}
+                    alt={student.full_name}
+                    className="h-[96px] w-[72px] rounded-xl object-cover border border-white/30 shrink-0"
+                    style={{ boxShadow: "0 0 30px rgba(96,165,250,0.5)" }}
+                  />
+                ) : (
+                  <div
+                    className="h-[72px] w-[72px] rounded-full flex items-center justify-center text-2xl font-bold text-white shrink-0"
+                    style={{
+                      background:
+                        "radial-gradient(circle at 30% 30%, #60A5FA, #2563EB)",
+                      boxShadow:
+                        "0 0 30px rgba(96,165,250,0.6), inset 0 1px 0 rgba(255,255,255,0.4)",
+                    }}
+                  >
+                    {initials(student.full_name)}
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="text-xs uppercase tracking-wider text-blue-100/70">
                     Welcome

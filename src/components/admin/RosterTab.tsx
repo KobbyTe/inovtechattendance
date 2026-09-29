@@ -27,6 +27,8 @@ import { Pencil, Plus, QrCode, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { generateStudentId, previewStudentId } from "@/lib/cohorts";
 import { StudentQrModal } from "./StudentQrModal";
+import { PassportPhotoInput } from "./PassportPhotoInput";
+import { StudentAvatar } from "@/components/StudentAvatar";
 
 const YEARS = ["Year 1", "Year 2", "Year 3", "Year 4"];
 
@@ -48,6 +50,7 @@ export function RosterTab() {
     guardian_msg_opt_out: false,
     student_email: "",
     rfid_uid: "",
+    photo_url: null as string | null,
   });
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<Student | null>(null);
@@ -61,6 +64,7 @@ export function RosterTab() {
     guardian_msg_opt_out: false,
     student_email: "",
     rfid_uid: "",
+    photo_url: null as string | null,
   });
   const [savingEdit, setSavingEdit] = useState(false);
 
@@ -105,6 +109,7 @@ export function RosterTab() {
         guardian_msg_opt_out: form.guardian_msg_opt_out,
         student_email: form.student_email || null,
         rfid_uid: form.rfid_uid.trim().toUpperCase() || null,
+        photo_url: form.photo_url,
       });
       if (error) {
         toast.error(
@@ -126,6 +131,7 @@ export function RosterTab() {
         guardian_msg_opt_out: false,
         student_email: "",
         rfid_uid: "",
+        photo_url: null,
       });
       load();
     } finally {
@@ -152,6 +158,7 @@ export function RosterTab() {
       guardian_msg_opt_out: s.guardian_msg_opt_out ?? false,
       student_email: s.student_email ?? "",
       rfid_uid: s.rfid_uid ?? "",
+      photo_url: s.photo_url ?? null,
     });
   }
 
@@ -171,6 +178,7 @@ export function RosterTab() {
         guardian_msg_opt_out: editForm.guardian_msg_opt_out,
         student_email: editForm.student_email || null,
         rfid_uid: editForm.rfid_uid.trim().toUpperCase() || null,
+        photo_url: editForm.photo_url,
       })
       .eq("id", editing.id);
     setSavingEdit(false);
@@ -227,6 +235,10 @@ export function RosterTab() {
               <SheetTitle>Add a student</SheetTitle>
             </SheetHeader>
             <form onSubmit={addStudent} className="space-y-4 mt-6">
+              <PassportPhotoInput
+                value={form.photo_url}
+                onChange={(v) => setForm({ ...form, photo_url: v })}
+              />
               <div className="space-y-2">
                 <Label>Full name</Label>
                 <Input
@@ -348,7 +360,17 @@ export function RosterTab() {
               return (
                 <tr key={s.id} className="border-t border-border">
                   <td className="px-4 py-2 font-mono text-xs">{s.student_id}</td>
-                  <td className="px-4 py-2">{s.full_name}</td>
+                  <td className="px-4 py-2">
+                    <div className="flex items-center gap-2.5">
+                      <StudentAvatar
+                        name={s.full_name}
+                        photoUrl={s.photo_url}
+                        size={30}
+                        rounded="passport"
+                      />
+                      <span>{s.full_name}</span>
+                    </div>
+                  </td>
                   <td className="px-4 py-2">
                     {c ? <CohortBadge cohort={c} /> : <span className="text-muted-foreground text-xs">—</span>}
                   </td>
@@ -379,6 +401,12 @@ export function RosterTab() {
             const c = s.cohort_id ? cohortById.get(s.cohort_id) : undefined;
             return (
               <li key={s.id} className="p-3 flex items-center gap-3">
+                <StudentAvatar
+                  name={s.full_name}
+                  photoUrl={s.photo_url}
+                  size={34}
+                  rounded="passport"
+                />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-semibold truncate">{s.full_name}</p>
@@ -418,6 +446,10 @@ export function RosterTab() {
           </SheetHeader>
           {editing && (
             <form onSubmit={saveEdit} className="space-y-4 mt-6">
+              <PassportPhotoInput
+                value={editForm.photo_url}
+                onChange={(v) => setEditForm({ ...editForm, photo_url: v })}
+              />
               <div className="rounded-md bg-muted px-3 py-2">
                 <p className="text-xs text-muted-foreground">Student ID</p>
                 <p className="font-mono font-semibold text-sm">{editing.student_id}</p>

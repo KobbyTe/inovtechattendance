@@ -92,7 +92,7 @@ export const lookupStudentForClockIn = createServerFn({ method: "POST" })
 
     const { data: s, error } = await supabaseAdmin
       .from("students")
-      .select("id, full_name, student_id, year_level, cohort_id")
+      .select("id, full_name, student_id, year_level, cohort_id, photo_url")
       .ilike("student_id", data.studentId)
       .maybeSingle();
     if (error) throw new Error(error.message);

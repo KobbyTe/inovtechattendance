@@ -849,6 +849,7 @@ export type Database = {
           guardian_phone: string | null
           id: string
           marketing_opt_in: boolean
+          photo_url: string | null
           rfid_uid: string | null
           student_email: string | null
           student_id: string
@@ -864,6 +865,7 @@ export type Database = {
           guardian_phone?: string | null
           id?: string
           marketing_opt_in?: boolean
+          photo_url?: string | null
           rfid_uid?: string | null
           student_email?: string | null
           student_id: string
@@ -879,6 +881,7 @@ export type Database = {
           guardian_phone?: string | null
           id?: string
           marketing_opt_in?: boolean
+          photo_url?: string | null
           rfid_uid?: string | null
           student_email?: string | null
           student_id?: string
