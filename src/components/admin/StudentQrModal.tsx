@@ -78,9 +78,17 @@ export function StudentQrModal({
               <p className="text-[10px] uppercase tracking-widest text-center" style={{ color: accent }}>
                 {cohort?.name ?? "Inovtech"} · Attendance ID
               </p>
-              <p className="text-center font-bold text-lg mt-1 text-slate-900">
-                {student.full_name}
-              </p>
+              <div className="mt-2 flex items-center justify-center gap-3">
+                {student.photo_url && (
+                  <img
+                    src={student.photo_url}
+                    alt={student.full_name}
+                    className="h-16 w-12 rounded-md object-cover"
+                    style={{ border: `2px solid ${accent}` }}
+                  />
+                )}
+                <p className="font-bold text-lg text-slate-900">{student.full_name}</p>
+              </div>
               <div className="flex justify-center my-3">
                 {loading || !url ? (
                   <div className="h-64 w-64 flex items-center justify-center text-slate-400">
