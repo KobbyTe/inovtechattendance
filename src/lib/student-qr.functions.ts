@@ -76,7 +76,7 @@ export const kioskClockWithStudentToken = createServerFn({ method: "POST" })
     const { data: s, error: sErr } = await supabaseAdmin
       .from("students")
       .select(
-        "student_id, full_name, cohort_id, student_email, guardian_name, guardian_email",
+        "student_id, full_name, cohort_id, student_email, guardian_name, guardian_email, photo_url",
       )
       .ilike("student_id", v.studentId)
       .maybeSingle();
@@ -206,6 +206,7 @@ export const kioskClockWithStudentToken = createServerFn({ method: "POST" })
       student: {
         student_id: s.student_id,
         full_name: s.full_name,
+        photo_url: s.photo_url ?? null,
       },
       cohort,
     };
