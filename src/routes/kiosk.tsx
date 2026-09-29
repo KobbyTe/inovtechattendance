@@ -480,15 +480,28 @@ function KioskPage() {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", stiffness: 300, damping: 18, delay: 0.15 }}
-                    className="h-24 w-24 sm:h-32 sm:w-32 rounded-full flex items-center justify-center text-4xl sm:text-5xl font-bold shrink-0"
-                    style={{
-                      background:
-                        "radial-gradient(circle at 30% 30%, #60A5FA, #2563EB)",
-                      boxShadow:
-                        "0 0 45px rgba(96,165,250,0.7), inset 0 1px 0 rgba(255,255,255,0.4)",
-                    }}
+                    className="shrink-0"
                   >
-                    {initials(stage.fullName)}
+                    {stage.photoUrl ? (
+                      <img
+                        src={stage.photoUrl}
+                        alt={stage.fullName}
+                        className="h-32 w-24 sm:h-40 sm:w-[7.5rem] rounded-2xl object-cover border-2 border-white/40"
+                        style={{ boxShadow: "0 0 45px rgba(96,165,250,0.7)" }}
+                      />
+                    ) : (
+                      <div
+                        className="h-24 w-24 sm:h-32 sm:w-32 rounded-full flex items-center justify-center text-4xl sm:text-5xl font-bold"
+                        style={{
+                          background:
+                            "radial-gradient(circle at 30% 30%, #60A5FA, #2563EB)",
+                          boxShadow:
+                            "0 0 45px rgba(96,165,250,0.7), inset 0 1px 0 rgba(255,255,255,0.4)",
+                        }}
+                      >
+                        {initials(stage.fullName)}
+                      </div>
+                    )}
                   </motion.div>
                   <div className="min-w-0">
                     {stage.titles.length > 0 && (
