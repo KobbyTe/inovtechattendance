@@ -27,6 +27,8 @@ import { Pencil, Plus, QrCode, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { generateStudentId, previewStudentId } from "@/lib/cohorts";
 import { StudentQrModal } from "./StudentQrModal";
+import { PassportPhotoInput } from "./PassportPhotoInput";
+import { StudentAvatar } from "@/components/StudentAvatar";
 
 const YEARS = ["Year 1", "Year 2", "Year 3", "Year 4"];
 
@@ -48,6 +50,7 @@ export function RosterTab() {
     guardian_msg_opt_out: false,
     student_email: "",
     rfid_uid: "",
+    photo_url: null as string | null,
   });
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<Student | null>(null);
@@ -61,6 +64,7 @@ export function RosterTab() {
     guardian_msg_opt_out: false,
     student_email: "",
     rfid_uid: "",
+    photo_url: null as string | null,
   });
   const [savingEdit, setSavingEdit] = useState(false);
 
