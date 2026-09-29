@@ -109,6 +109,7 @@ export function RosterTab() {
         guardian_msg_opt_out: form.guardian_msg_opt_out,
         student_email: form.student_email || null,
         rfid_uid: form.rfid_uid.trim().toUpperCase() || null,
+        photo_url: form.photo_url,
       });
       if (error) {
         toast.error(
@@ -130,6 +131,7 @@ export function RosterTab() {
         guardian_msg_opt_out: false,
         student_email: "",
         rfid_uid: "",
+        photo_url: null,
       });
       load();
     } finally {
@@ -156,6 +158,7 @@ export function RosterTab() {
       guardian_msg_opt_out: s.guardian_msg_opt_out ?? false,
       student_email: s.student_email ?? "",
       rfid_uid: s.rfid_uid ?? "",
+      photo_url: s.photo_url ?? null,
     });
   }
 
@@ -175,6 +178,7 @@ export function RosterTab() {
         guardian_msg_opt_out: editForm.guardian_msg_opt_out,
         student_email: editForm.student_email || null,
         rfid_uid: editForm.rfid_uid.trim().toUpperCase() || null,
+        photo_url: editForm.photo_url,
       })
       .eq("id", editing.id);
     setSavingEdit(false);
