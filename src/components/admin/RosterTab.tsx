@@ -446,6 +446,10 @@ export function RosterTab() {
           </SheetHeader>
           {editing && (
             <form onSubmit={saveEdit} className="space-y-4 mt-6">
+              <PassportPhotoInput
+                value={editForm.photo_url}
+                onChange={(v) => setEditForm({ ...editForm, photo_url: v })}
+              />
               <div className="rounded-md bg-muted px-3 py-2">
                 <p className="text-xs text-muted-foreground">Student ID</p>
                 <p className="font-mono font-semibold text-sm">{editing.student_id}</p>
