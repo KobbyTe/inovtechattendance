@@ -360,7 +360,17 @@ export function RosterTab() {
               return (
                 <tr key={s.id} className="border-t border-border">
                   <td className="px-4 py-2 font-mono text-xs">{s.student_id}</td>
-                  <td className="px-4 py-2">{s.full_name}</td>
+                  <td className="px-4 py-2">
+                    <div className="flex items-center gap-2.5">
+                      <StudentAvatar
+                        name={s.full_name}
+                        photoUrl={s.photo_url}
+                        size={30}
+                        rounded="passport"
+                      />
+                      <span>{s.full_name}</span>
+                    </div>
+                  </td>
                   <td className="px-4 py-2">
                     {c ? <CohortBadge cohort={c} /> : <span className="text-muted-foreground text-xs">—</span>}
                   </td>
@@ -391,6 +401,12 @@ export function RosterTab() {
             const c = s.cohort_id ? cohortById.get(s.cohort_id) : undefined;
             return (
               <li key={s.id} className="p-3 flex items-center gap-3">
+                <StudentAvatar
+                  name={s.full_name}
+                  photoUrl={s.photo_url}
+                  size={34}
+                  rounded="passport"
+                />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-semibold truncate">{s.full_name}</p>
