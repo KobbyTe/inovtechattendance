@@ -36,6 +36,7 @@ type Stage =
       kind: "greeting";
       firstName: string;
       fullName: string;
+      photoUrl?: string | null;
       action: "in" | "out";
       streak: number;
       cohort: { name: string; color: string } | null;
@@ -154,6 +155,7 @@ function KioskPage() {
         kind: "greeting",
         firstName: r.student.full_name.split(/\s+/)[0],
         fullName: r.student.full_name,
+        photoUrl: r.student.photo_url ?? null,
         action: r.action,
         streak,
         cohort: r.cohort ? { name: r.cohort.name, color: r.cohort.color } : null,
@@ -242,6 +244,7 @@ function KioskPage() {
         kind: "greeting",
         firstName: first,
         fullName: info.student.full_name,
+        photoUrl: info.student.photo_url ?? null,
         action,
         streak,
         cohort: info.cohort ? { name: info.cohort.name, color: info.cohort.color } : null,
