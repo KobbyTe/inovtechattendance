@@ -25,10 +25,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Pencil, Plus, QrCode, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { generateStudentId, previewStudentId } from "@/lib/cohorts";
 import { StudentQrModal } from "./StudentQrModal";
 import { PassportPhotoInput } from "./PassportPhotoInput";
 import { StudentAvatar } from "@/components/StudentAvatar";
+import { AddStudentDialog } from "./AddStudentDialog";
 
 const YEARS = ["Year 1", "Year 2", "Year 3", "Year 4"];
 
@@ -40,19 +40,6 @@ export function RosterTab() {
   const [cohortFilter, setCohortFilter] = useState<string>("all");
   const [open, setOpen] = useState(false);
   const [qrStudent, setQrStudent] = useState<Student | null>(null);
-  const [form, setForm] = useState({
-    full_name: "",
-    year_level: "Year 1",
-    cohort_id: "",
-    guardian_name: "",
-    guardian_email: "",
-    guardian_phone: "",
-    guardian_msg_opt_out: false,
-    student_email: "",
-    rfid_uid: "",
-    photo_url: null as string | null,
-  });
-  const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<Student | null>(null);
   const [editForm, setEditForm] = useState({
     full_name: "",
@@ -85,60 +72,6 @@ export function RosterTab() {
   }, []);
 
   const cohortById = new Map(cohorts.map((c) => [c.id, c]));
-  const selectedCohort = form.cohort_id ? cohortById.get(form.cohort_id) : undefined;
-  const idPreview = selectedCohort && form.full_name
-    ? previewStudentId(selectedCohort.code, form.full_name)
-    : null;
-
-  async function addStudent(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.cohort_id) return toast.error("Please choose a cohort");
-    const cohort = cohortById.get(form.cohort_id);
-    if (!cohort) return toast.error("Cohort not found");
-    setBusy(true);
-    try {
-      const student_id = await generateStudentId(cohort.code, cohort.id, form.full_name);
-      const { error } = await supabase.from("students").insert({
-        student_id,
-        full_name: form.full_name,
-        year_level: form.year_level,
-        cohort_id: form.cohort_id,
-        guardian_name: form.guardian_name || null,
-        guardian_email: form.guardian_email || null,
-        guardian_phone: form.guardian_phone || null,
-        guardian_msg_opt_out: form.guardian_msg_opt_out,
-        student_email: form.student_email || null,
-        rfid_uid: form.rfid_uid.trim().toUpperCase() || null,
-        photo_url: form.photo_url,
-      });
-      if (error) {
-        toast.error(
-          error.code === "23505"
-            ? "That student ID or RFID card is already assigned"
-            : error.message
-        );
-        return;
-      }
-      toast.success(`Student added — ${student_id}`);
-      setOpen(false);
-      setForm({
-        full_name: "",
-        year_level: "Year 1",
-        cohort_id: "",
-        guardian_name: "",
-        guardian_email: "",
-        guardian_phone: "",
-        guardian_msg_opt_out: false,
-        student_email: "",
-        rfid_uid: "",
-        photo_url: null,
-      });
-      load();
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function remove(id: string) {
     const { error } = await supabase.from("students").delete().eq("id", id);
     if (error) return toast.error(error.message);
@@ -224,122 +157,19 @@ export function RosterTab() {
             ))}
           </SelectContent>
         </Select>
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <Button className="h-11">
-              <Plus className="mr-1 h-4 w-4" /> Add student
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>Add a student</SheetTitle>
-            </SheetHeader>
-            <form onSubmit={addStudent} className="space-y-4 mt-6">
-              <PassportPhotoInput
-                value={form.photo_url}
-                onChange={(v) => setForm({ ...form, photo_url: v })}
-              />
-              <div className="space-y-2">
-                <Label>Full name</Label>
-                <Input
-                  required
-                  value={form.full_name}
-                  onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Cohort</Label>
-                <Select
-                  value={form.cohort_id}
-                  onValueChange={(v) => setForm({ ...form, cohort_id: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose cohort" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {cohorts.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {idPreview && (
-                <div className="rounded-md bg-muted px-3 py-2">
-                  <p className="text-xs text-muted-foreground">Auto-generated ID</p>
-                  <p className="font-mono font-semibold text-sm">{idPreview}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    Final sequence number is assigned on save.
-                  </p>
-                </div>
-              )}
-              <div className="space-y-2">
-                <Label>Year level</Label>
-                <Select
-                  value={form.year_level}
-                  onValueChange={(v) => setForm({ ...form, year_level: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {YEARS.map((y) => (
-                      <SelectItem key={y} value={y}>
-                        {y}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Guardian / Parent name</Label>
-                <Input
-                  value={form.guardian_name}
-                  onChange={(e) => setForm({ ...form, guardian_name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Guardian / Parent email</Label>
-                <Input
-                  type="email"
-                  value={form.guardian_email}
-                  onChange={(e) => setForm({ ...form, guardian_email: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Guardian / Parent phone (SMS &amp; WhatsApp)</Label>
-                <Input
-                  type="tel"
-                  placeholder="024 123 4567 or +233241234567"
-                  value={form.guardian_phone}
-                  onChange={(e) => setForm({ ...form, guardian_phone: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Student email (optional)</Label>
-                <Input
-                  type="email"
-                  value={form.student_email}
-                  onChange={(e) => setForm({ ...form, student_email: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>RFID card UID (optional)</Label>
-                <Input
-                  value={form.rfid_uid}
-                  placeholder="e.g. 04A2B3C4"
-                  className="font-mono uppercase"
-                  onChange={(e) => setForm({ ...form, rfid_uid: e.target.value })}
-                />
-              </div>
-              <Button type="submit" disabled={busy} className="w-full h-11">
-                {busy ? "Adding…" : "Add student"}
-              </Button>
-            </form>
-          </SheetContent>
-        </Sheet>
+        <Button className="h-11" onClick={() => setOpen(true)}>
+          <Plus className="mr-1 h-4 w-4" /> Add student
+        </Button>
       </div>
+
+      <AddStudentDialog
+        open={open}
+        onOpenChange={setOpen}
+        cohorts={cohorts}
+        onCreated={(student) => {
+          setStudents((current) => [...current, student].sort((a, b) => a.student_id.localeCompare(b.student_id)));
+        }}
+      />
 
       <div className="rounded-xl bg-card border border-border overflow-hidden">
         {/* Desktop table */}

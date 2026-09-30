@@ -66,6 +66,20 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-student-backdrop: var(--student-backdrop);
+  --color-student-panel: var(--student-panel);
+  --color-student-field: var(--student-field);
+  --color-student-footer: var(--student-footer);
+  --color-student-line: var(--student-line);
+  --color-student-text: var(--student-text);
+  --color-student-muted: var(--student-muted);
+  --color-student-accent: var(--student-accent);
+  --color-student-accent-soft: var(--student-accent-soft);
+  --color-student-success: var(--student-success);
+  --color-student-success-soft: var(--student-success-soft);
+  --color-student-danger: var(--student-danger);
+  --color-student-danger-soft: var(--student-danger-soft);
+  --color-student-glass: var(--student-glass);
 }
 
 :root {
@@ -110,6 +124,20 @@
   --rail: oklch(0.24 0.008 260);
   --rail-foreground: oklch(0.97 0.003 250);
   --rail-muted: oklch(0.62 0.012 260);
+  --student-backdrop: oklch(0.08 0.055 260 / 84%);
+  --student-panel: oklch(0.16 0.07 257);
+  --student-field: oklch(0.23 0.075 257 / 72%);
+  --student-footer: oklch(0.13 0.06 258);
+  --student-line: oklch(0.62 0.18 255 / 48%);
+  --student-text: oklch(0.98 0.01 250);
+  --student-muted: oklch(0.75 0.06 253);
+  --student-accent: oklch(0.74 0.17 242);
+  --student-accent-soft: oklch(0.58 0.22 252 / 22%);
+  --student-success: oklch(0.76 0.18 147);
+  --student-success-soft: oklch(0.7 0.18 147 / 18%);
+  --student-danger: oklch(0.7 0.22 20);
+  --student-danger-soft: oklch(0.62 0.22 20 / 16%);
+  --student-glass: oklch(0.27 0.1 257 / 42%);
 }
 
 .dark {
@@ -213,27 +241,61 @@
   box-shadow: var(--shadow-soft);
 }
 
+.student-dialog + button,
+.student-dialog button,
+.student-dialog input {
+  letter-spacing: 0;
+}
+
+.student-dialog-aside {
+  background:
+    linear-gradient(150deg, oklch(0.55 0.23 253 / 82%), transparent 52%),
+    linear-gradient(330deg, oklch(0.47 0.25 294 / 72%), transparent 48%),
+    oklch(0.18 0.09 260);
+}
+
+.student-input {
+  height: 2.75rem;
+  border-color: var(--student-line);
+  background: var(--student-field);
+  color: var(--student-text);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 5%);
+}
+
+.student-input::placeholder {
+  color: var(--student-muted);
+}
+
+.student-input[aria-invalid="true"] {
+  border-color: var(--student-danger);
+  box-shadow: 0 0 0 1px var(--student-danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .student-dialog * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 
 /* ============ Glassmorphism & animation utilities ============ */
 @layer utilities {
   .glass {
     background: rgba(255, 255, 255, 0.18);
     backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.3);
     box-shadow: 0 8px 32px rgba(31, 107, 255, 0.12);
   }
   .glass-strong {
     background: rgba(255, 255, 255, 0.25);
     backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.35);
     box-shadow: 0 12px 40px rgba(31, 107, 255, 0.18);
   }
   .glass-dark {
     background: rgba(15, 33, 103, 0.55);
     backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
     border: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   }
