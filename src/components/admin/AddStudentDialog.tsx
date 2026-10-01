@@ -26,7 +26,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PassportPhotoInput } from "@/components/admin/PassportPhotoInput";
 import { createStudent } from "@/lib/students.functions";
 import { addStudentSchema, type AddStudentInput } from "@/lib/student-validation";
-import { previewStudentId } from "@/lib/cohorts";
 import type { Cohort, Student } from "@/types";
 
 const YEARS = ["Year 1", "Year 2", "Year 3", "Year 4"] as const;
@@ -204,7 +203,7 @@ export function AddStudentDialog({
                     </Field>
                     {selectedCohort && form.full_name.trim() ? (
                       <div className="rounded-lg border border-student-line bg-student-field px-4 py-3 text-xs text-student-muted">
-                        Preview ID <span className="ml-2 font-mono font-semibold text-student-text">{previewStudentId(selectedCohort.code, form.full_name)}</span>
+                        Student ID <span className="ml-2 font-mono font-semibold text-student-text">Assigned securely after saving</span>
                       </div>
                     ) : null}
                   </div>
@@ -230,7 +229,7 @@ export function AddStudentDialog({
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-student-success-soft px-3 py-1 text-xs font-semibold text-student-success"><Sparkles className="h-3.5 w-3.5" /> Ready to add</span>
                       <h3 className="mt-3 text-2xl font-bold">{form.full_name}</h3>
                       <p className="mt-1 text-sm text-student-muted">{selectedCohort?.name} · {form.year_level}</p>
-                      <p className="mt-2 font-mono text-xs text-student-accent">{selectedCohort ? previewStudentId(selectedCohort.code, form.full_name) : ""}</p>
+                      <p className="mt-2 font-mono text-xs text-student-accent">ID will use only A–D and 0–9</p>
                     </div>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">

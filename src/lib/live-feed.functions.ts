@@ -58,6 +58,40 @@ export const getRecentClockIns = createServerFn({ method: "GET" }).handler(
   },
 );
 
+export const getLandingAttendance = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const today = format(new Date(), "yyyy-MM-dd");
+    const [{ data: attendance, error }, { data: students }, { data: cohorts }] = await Promise.all([
+      supabaseAdmin
+        .from("attendance")
+        .select("id, student_id, student_name, clock_in, clock_out")
+        .eq("date", today)
+        .order("clock_in", { ascending: true }),
+      supabaseAdmin.from("students").select("student_id, cohort_id"),
+      supabaseAdmin.from("cohorts").select("id, name"),
+    ]);
+    if (error) throw new Error(error.message);
+
+    const cohortNameById = new Map((cohorts ?? []).map((cohort) => [cohort.id, cohort.name]));
+    const cohortByStudent = new Map(
+      (students ?? []).map((student) => [
+        student.student_id,
+        student.cohort_id ? cohortNameById.get(student.cohort_id) ?? "—" : "—",
+      ]),
+    );
+
+    return (attendance ?? []).map((record) => ({
+      id: record.id,
+      studentId: record.student_id,
+      studentName: record.student_name,
+      cohortName: cohortByStudent.get(record.student_id) ?? "—",
+      clockIn: record.clock_in,
+      clockOut: record.clock_out,
+    }));
+  },
+);
+
 export const getStudentStreak = createServerFn({ method: "POST" })
   .inputValidator((i) =>
     z.object({ studentId: z.string().trim().min(1).max(64) }).parse(i),
