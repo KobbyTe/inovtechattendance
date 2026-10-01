@@ -28,8 +28,15 @@ export function LandingAttendanceDashboard() {
   const [earlyBird, setEarlyBird] = useState<Champion>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const [loading, setLoading] = useState(true);
+  const [today, setToday] = useState("");
 
   useEffect(() => {
+    setToday(new Intl.DateTimeFormat("en-GB", {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    }).format(new Date()));
     let active = true;
     async function refresh() {
       try {
@@ -59,13 +66,6 @@ export function LandingAttendanceDashboard() {
   );
   const clockedOut = rows.filter((row) => row.clockOut).length;
   const stillIn = rows.length - clockedOut;
-  const today = new Intl.DateTimeFormat("en-GB", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  }).format(new Date());
-
   return (
     <div className="landing-theme min-h-screen bg-landing text-landing-foreground">
       <header className="sticky top-0 z-50 border-b border-landing-line bg-landing/95 backdrop-blur-md">
