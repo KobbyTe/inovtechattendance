@@ -80,6 +80,17 @@
   --color-student-danger: var(--student-danger);
   --color-student-danger-soft: var(--student-danger-soft);
   --color-student-glass: var(--student-glass);
+  --color-landing: var(--landing);
+  --color-landing-foreground: var(--landing-foreground);
+  --color-landing-panel: var(--landing-panel);
+  --color-landing-line: var(--landing-line);
+  --color-landing-muted: var(--landing-muted);
+  --color-landing-chip: var(--landing-chip);
+  --color-landing-action: var(--landing-action);
+  --color-landing-action-foreground: var(--landing-action-foreground);
+  --color-landing-info: var(--landing-info);
+  --color-landing-success: var(--landing-success);
+  --color-landing-success-soft: var(--landing-success-soft);
 }
 
 :root {
@@ -138,6 +149,22 @@
   --student-danger: oklch(0.7 0.22 20);
   --student-danger-soft: oklch(0.62 0.22 20 / 16%);
   --student-glass: oklch(0.27 0.1 257 / 42%);
+  --landing: oklch(0.105 0.045 263);
+  --landing-foreground: oklch(0.96 0.018 254);
+  --landing-panel: oklch(0.155 0.055 263);
+  --landing-line: oklch(0.29 0.07 263 / 70%);
+  --landing-muted: oklch(0.71 0.055 259);
+  --landing-chip: oklch(0.23 0.07 263);
+  --landing-action: oklch(0.82 0.16 85);
+  --landing-action-foreground: oklch(0.16 0.04 263);
+  --landing-info: oklch(0.68 0.18 251);
+  --landing-success: oklch(0.72 0.17 159);
+  --landing-success-soft: oklch(0.39 0.12 157 / 52%);
+}
+
+.landing-theme {
+  color-scheme: dark;
+  letter-spacing: 0;
 }
 
 .dark {
