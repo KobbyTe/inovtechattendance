@@ -2,10 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { addStudentSchema } from "@/lib/student-validation";
 
-function nameCode(fullName: string) {
-  const parts = fullName.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 1) return parts[0].slice(0, 4).padEnd(4, "X").toUpperCase();
-  return `${parts[0].slice(0, 2).padEnd(2, "X")}${parts.at(-1)?.slice(0, 2).padEnd(2, "X")}`.toUpperCase();
+const STUDENT_ID_CHARACTERS = "ABCD0123456789";
+
+function randomStudentId(length = 8) {
+  const values = new Uint8Array(length);
+  crypto.getRandomValues(values);
+  return Array.from(values, (value) => STUDENT_ID_CHARACTERS[value % STUDENT_ID_CHARACTERS.length]).join("");
 }
 
 export const createStudent = createServerFn({ method: "POST" })
@@ -20,23 +22,26 @@ export const createStudent = createServerFn({ method: "POST" })
 
     const { data: cohort, error: cohortError } = await context.supabase
       .from("cohorts")
-      .select("id, code")
+      .select("id")
       .eq("id", data.cohort_id)
       .maybeSingle();
     if (cohortError || !cohort) throw new Error("The selected cohort is unavailable");
 
-    const prefix = `${cohort.code}-${nameCode(data.full_name)}-`;
-    const { data: existing, error: lookupError } = await context.supabase
-      .from("students")
-      .select("student_id")
-      .like("student_id", `${prefix}%`);
-    if (lookupError) throw new Error(lookupError.message);
-
-    const next = Math.max(
-      0,
-      ...(existing ?? []).map((row) => Number.parseInt(row.student_id.slice(prefix.length), 10) || 0),
-    ) + 1;
-    const studentId = `${prefix}${String(next).padStart(3, "0")}`;
+    let studentId = "";
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const candidate = randomStudentId();
+      const { data: match, error: lookupError } = await context.supabase
+        .from("students")
+        .select("id")
+        .eq("student_id", candidate)
+        .maybeSingle();
+      if (lookupError) throw new Error(lookupError.message);
+      if (!match) {
+        studentId = candidate;
+        break;
+      }
+    }
+    if (!studentId) throw new Error("Could not generate a unique student ID. Please try again.");
 
     const { data: student, error } = await context.supabase
       .from("students")

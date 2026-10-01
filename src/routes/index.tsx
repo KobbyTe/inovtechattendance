@@ -4,9 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { verifyAttendanceToken } from "@/lib/attendance-qr.functions";
 import { Loader2, ShieldAlert } from "lucide-react";
 import { ClockInForm } from "@/components/ClockInForm";
-import logoInovtech from "@/assets/logo-inovtech.png";
-import { MeshGradient } from "@paper-design/shaders-react";
-import { LiveTicker } from "@/components/LiveTicker";
+import { LandingAttendanceDashboard } from "@/components/LandingAttendanceDashboard";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -22,6 +20,8 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Mark your attendance for the Inovtech Future Skills Bootcamp.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   validateSearch: (search: Record<string, unknown>): { t?: string } =>
@@ -52,65 +52,30 @@ function Index() {
     };
   }, [t, verify]);
 
+  if (!t) return <LandingAttendanceDashboard />;
+
   return (
-    <div className="relative min-h-screen flex flex-col bg-bootcamp-gradient overflow-hidden">
-      {/* Aurora / mesh gradient WebGL background */}
-      <div className="absolute inset-0 z-0" aria-hidden="true">
-        <MeshGradient
-          className="h-full w-full"
-          colors={["#0F2167", "#1E40AF", "#4338CA", "#60A5FA", "#A78BFA"]}
-          speed={0.25}
-          distortion={1}
-          swirl={0.8}
-        />
-        <MeshGradient
-          className="absolute inset-0 h-full w-full opacity-40 mix-blend-screen"
-          colors={["#000000", "#818CF8", "#22D3EE", "#000000"]}
-          speed={0.15}
-          distortion={0.9}
-          swirl={0.4}
-        />
-        {/* subtle grain / vignette */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(8,15,50,0.55)_100%)]" />
-      </div>
-
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-rail/70 px-4 py-3 backdrop-blur-xl">
-        <div className="mx-auto max-w-xl flex items-center gap-3">
-          <div className="h-12 w-12 rounded-xl bg-white flex items-center justify-center shrink-0 overflow-hidden p-1">
-            <img src={logoInovtech} alt="Inovtech logo" className="h-full w-full object-contain" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-lg sm:text-2xl font-bold text-white tracking-tight leading-tight">
-              Inovtech Future Skills Bootcamp
-            </h1>
-            <p className="text-xs sm:text-sm text-blue-200 leading-tight">
-              Attendance System
-            </p>
-          </div>
-        </div>
-      </header>
-
-      <main className="relative z-10 flex-1 mx-auto w-full max-w-xl px-4 py-5">
-        <section className="glass-strong rounded-2xl p-6 sm:p-7">
+    <div className="landing-theme min-h-screen bg-landing px-4 py-10 text-landing-foreground">
+      <main className="mx-auto w-full max-w-xl">
+        <section className="rounded-2xl border border-landing-line bg-landing-panel p-6 sm:p-7">
           {state.kind === "loading" && (
-            <div className="flex flex-col items-center text-white py-10 gap-3">
+            <div className="flex flex-col items-center py-10 gap-3">
               <Loader2 className="h-8 w-8 animate-spin" />
-              <p className="text-sm text-blue-100/90">Verifying QR code…</p>
+               <p className="text-sm text-landing-muted">Verifying QR code…</p>
             </div>
           )}
           {state.kind === "blocked" && (
-            <div className="flex flex-col items-center text-center text-white py-8 gap-4">
-              <div className="h-14 w-14 rounded-full glass flex items-center justify-center">
+            <div className="flex flex-col items-center text-center py-8 gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-landing-chip">
                 <ShieldAlert className="h-7 w-7" />
               </div>
               <div className="space-y-1">
                 <h2 className="text-xl font-bold">QR code required</h2>
-                <p className="text-sm text-blue-100/90 max-w-sm">{state.reason}</p>
+                <p className="max-w-sm text-sm text-landing-muted">{state.reason}</p>
               </div>
               <Link
                 to="/admin"
-                className="text-xs text-blue-200/80 hover:text-white underline"
+                className="text-xs text-landing-info underline hover:text-landing-foreground"
               >
                 Admin sign in
               </Link>
@@ -119,12 +84,7 @@ function Index() {
           {state.kind === "ok" && t && <ClockInForm token={t} />}
         </section>
 
-        <LiveTicker />
       </main>
-
-      <footer className="relative z-10 py-6 text-center text-xs text-blue-200/70">
-        © 2025 Inovtech Future Skills Bootcamp
-      </footer>
     </div>
   );
 }
