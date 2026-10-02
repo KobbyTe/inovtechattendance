@@ -98,7 +98,7 @@ export function AdminShell({
     <div className="admin-theme min-h-screen bg-rail text-foreground">
       <div className="flex min-h-screen">
         {/* Charcoal icon rail */}
-        <aside className="hidden md:flex w-[76px] shrink-0 flex-col items-center gap-1 bg-rail py-5">
+        <aside className="hidden md:flex sticky top-0 h-screen w-[76px] shrink-0 flex-col items-center gap-1 self-start overflow-hidden bg-rail py-5 z-40">
           <div className="mb-4 h-10 w-10 overflow-hidden rounded-xl bg-white p-1.5">
             <img
               src={logoInovtech}
