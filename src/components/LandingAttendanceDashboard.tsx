@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { getCurrentChampions } from "@/lib/champions.functions";
 import { getLandingAttendance } from "@/lib/live-feed.functions";
 import { formatTime, initials } from "@/lib/attendance";
+import { TodayQrDialog } from "@/components/TodayQrDialog";
 import logoInovtech from "@/assets/logo-inovtech.png";
 
 type AttendanceRow = {
@@ -80,9 +81,7 @@ export function LandingAttendanceDashboard() {
             <p className="truncate text-sm font-bold sm:text-lg">Inovtech Future Skills Bootcamp</p>
             <p className="text-[11px] text-landing-muted sm:text-xs">Attendance System</p>
           </div>
-          <Button asChild className="ml-auto h-10 rounded-full bg-landing-action px-4 font-bold text-landing-action-foreground hover:bg-landing-action/90 sm:px-6">
-            <Link to="/admin"><QrCode className="h-4 w-4" /><span className="hidden sm:inline">Show QR code</span><span className="sm:hidden">QR code</span></Link>
-          </Button>
+          <TodayQrDialog />
         </div>
       </header>
 

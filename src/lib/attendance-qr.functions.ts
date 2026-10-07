@@ -18,3 +18,7 @@ export const getAttendanceQrToken = createServerFn({ method: "POST" })
 export const verifyAttendanceToken = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ token: z.string().min(1).max(512) }).parse(input))
   .handler(async ({ data }) => verifyQrToken(data.token));
+/** Public: today's clock-in QR token, shown on the landing-page display. Valid only today. */
+export const getTodayAttendanceQr = createServerFn({ method: "GET" }).handler(async () =>
+  generateQrToken(new Date()),
+);
